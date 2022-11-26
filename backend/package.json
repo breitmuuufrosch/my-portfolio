@@ -10,7 +10,8 @@
     "express": "^4.18.2",
     "mysql": "^2.18.1",
     "mysql2": "^2.3.3",
-    "yahoo-finance2": "^2.3.10"
+    "yahoo-finance2": "^2.3.10",
+    "yesql": "^5.0.0"
   },
   "scripts": {
     "start": "node src/app.ts",
@@ -24,6 +25,7 @@
     "@types/express": "^4.17.14",
     "@types/mysql": "^2.15.21",
     "@types/node": "^18.11.9",
+    "@types/yesql": "^4.1.1",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.0.1",
