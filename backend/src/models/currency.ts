@@ -1,39 +1,42 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { Currency } from '../types/currency';
 import { db } from '../db';
+import { mysql as sql } from 'yesql';
 
-export const create = (order: Currency, callback: Function) => {
-  const queryString = 'INSERT INTO currency (symbol, description) VALUES (?, ?)';
+export const create = (currency: Currency, callback: Function) => {
+  const queryString = sql(
+    'INSERT INTO currency (symbol, description) VALUES (?, ?)'
+  );
 
   db.query(
-    queryString,
-    [order.symbol, order.description],
+    queryString({symbol: currency.symbol, description: currency.description}),
     (err, result) => {
       if (err) { callback(err); }
 
-      const { insertId } = <OkPacket> result;
+      const { insertId } = <OkPacket>result;
       callback(null, insertId);
     },
   );
 };
 
-export const findOne = (orderId: number, callback: Function) => {
-  const queryString = `
-      SELECT 
+export const findOne = (symbol: string, callback: Function) => {
+  const queryString = sql(
+    `SELECT 
         c.symbol,
         c.description
       FROM currency AS c
-      WHERE c.order_id=?`;
+      WHERE c.symbol=:symbol`
+  );
 
-  db.query(queryString, orderId, (err, result) => {
+  db.query(queryString({ symbol: symbol }), (err, result) => {
     if (err) { callback(err); }
 
-    const row = (<RowDataPacket> result)[0];
-    const order: Currency = {
+    const row = (<RowDataPacket>result)[0];
+    const currency: Currency = {
       symbol: row.symbol,
       description: row.description,
     };
-    callback(null, order);
+    callback(null, currency);
   });
 };
 
@@ -47,26 +50,27 @@ export const findAll = (callback: Function) => {
   db.query(queryString, (err, result) => {
     if (err) { callback(err); }
 
-    const rows = <RowDataPacket[]> result;
-    const orders: Currency[] = [];
+    const rows = <RowDataPacket[]>result;
+    const currencies: Currency[] = [];
 
     rows.forEach((row) => {
-      const order: Currency = {
+      const currency: Currency = {
         symbol: row.symbol,
         description: row.description,
       };
-      orders.push(order);
+      currencies.push(currency);
     });
-    callback(null, orders);
+    callback(null, currencies);
   });
 };
 
-export const update = (order: Currency, callback: Function) => {
-  const queryString = 'UPDATE currency SET symbol=?, description=? WHERE symbol=?';
+export const update = (currency: Currency, callback: Function) => {
+  const queryString = sql(
+    'UPDATE currency SET symbol=:symbol, description=:description WHERE symbol=:symbol'
+  );
 
   db.query(
-    queryString,
-    [order.symbol, order.symbol],
+    queryString({symbol: currency.symbol, description: currency.description}),
     (err, result) => {
       if (err) { callback(err); }
       callback(null);

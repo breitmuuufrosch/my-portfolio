@@ -3,13 +3,13 @@ import express from 'express';
 import * as bodyParser from 'body-parser';
 import cors from 'cors';
 import * as path from 'path';
-import { orderRouter } from './routes/currencyRouter';
+import { currencyRouter } from './routes/currencyRouter';
 import { securitiesRouter } from './routes/securitiesRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
 // import { generateToken } from './api/utils/jwt.utils';
-import routes from './api/routes';
+// import routes from './api/routes';
 // import logger from './api/middlewares/logger.middleware';
 // import errorHandler from './api/middlewares/error-handler.middleware';
 // import * as MySQLConnector from './api/utils/mysql.connector';
@@ -63,7 +63,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
-app.use('/currencies', orderRouter);
+app.use('/currencies', currencyRouter);
 app.use('/securities', securitiesRouter);
 
 app.listen(port, () => {

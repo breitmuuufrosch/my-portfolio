@@ -213,6 +213,11 @@
     "@types/mime" "*"
     "@types/node" "*"
 
+"@types/yesql@^4.1.1":
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/@types/yesql/-/yesql-4.1.1.tgz#863cfa3dbac7749c4e3d8f7fe77bfc7d1a6e6298"
+  integrity sha512-aLTGG0R/wNCBAzvMNk7pGLFcamZeJMBiKqrObK8BukmcpDEtyvfpR/Hzpta5L9VEtyWgF5w5VIW8HiOUfwhSKw==
+
 "@typescript-eslint/eslint-plugin@^5.0.0":
   version "5.44.0"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-5.44.0.tgz#105788f299050c917eb85c4d9fd04b089e3740de"
@@ -2526,6 +2531,11 @@ yallist@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/yallist/-/yallist-4.0.0.tgz#9bb92790d9c0effec63be73519e11a35019a3a72"
   integrity sha512-3wdGidZyq5PB084XLES5TpOSRA3wjXAlIWMhum2kRcv/41Sn2emQ0dycQW4uZXLejwKvg6EsvbdlVL+FYEct7A==
+
+yesql@^5.0.0:
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/yesql/-/yesql-5.0.0.tgz#aa6f206ff0d77618404b37567b66ca82a76bd8c8"
+  integrity sha512-ua4Ok0hv6Q+KPn2oJrGNRfsubYnKPLJAt6kvawG6Aqb6yg4Cm1T2JIBveFNx0aDhCIansNVq/9MFzuvmNdnJnw==
 
 yn@3.1.1:
   version "3.1.1"

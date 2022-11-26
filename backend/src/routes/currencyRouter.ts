@@ -1,43 +1,43 @@
 import express, { Request, Response } from 'express';
-import * as orderModel from '../models/currency';
+import * as currencyModel from '../models/currency';
 import { Currency } from '../types/currency';
 
-const orderRouter = express.Router();
+const currencyRouter = express.Router();
 
-orderRouter.get('/', async (req: Request, res: Response) => {
-  orderModel.findAll((err: Error, orders: Currency[]) => {
+currencyRouter.get('/', async (req: Request, res: Response) => {
+  currencyModel.findAll((err: Error, currencies: Currency[]) => {
     if (err) {
       return res.status(500).json({ errorMessage: err.message });
     }
 
-    res.status(200).json({ data: orders });
+    res.status(200).json({ data: currencies });
   });
 });
 
-orderRouter.post('/', async (req: Request, res: Response) => {
-  const newOrder: Currency = req.body;
-  orderModel.create(newOrder, (err: Error, orderId: number) => {
+currencyRouter.post('/', async (req: Request, res: Response) => {
+  const newCurrency: Currency = req.body;
+  currencyModel.create(newCurrency, (err: Error, symbol: number) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
 
-    res.status(200).json({ orderId });
+    res.status(200).json({ symbol });
   });
 });
 
-orderRouter.get('/:id', async (req: Request, res: Response) => {
-  const orderId = Number(req.params.id);
-  orderModel.findOne(orderId, (err: Error, order: Currency) => {
+currencyRouter.get('/:symbol', async (req: Request, res: Response) => {
+  const symbol = req.params.symbol;
+  currencyModel.findOne(symbol, (err: Error, currency: Currency) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
-    res.status(200).json({ data: order });
+    res.status(200).json({ data: currency });
   });
 });
 
-orderRouter.put('/:id', async (req: Request, res: Response) => {
-  const order: Currency = req.body;
-  orderModel.update(order, (err: Error) => {
+currencyRouter.put('/:symbol', async (req: Request, res: Response) => {
+  const currency: Currency = req.body;
+  currencyModel.update(currency, (err: Error) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
@@ -46,4 +46,4 @@ orderRouter.put('/:id', async (req: Request, res: Response) => {
   });
 });
 
-export { orderRouter };
+export { currencyRouter };
