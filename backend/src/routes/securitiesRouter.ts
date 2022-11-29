@@ -1,9 +1,9 @@
 import express, { Request, Response } from 'express';
 import { stringify } from 'querystring';
-// import * as orderModel from "../models/currency";
+import * as securityModel from "../models/security";
 import * as yahooFinance from '../models/yahooApi';
 import { Currency } from '../types/currency';
-import { Security } from '../types/security';
+import { Security, SecurityQuote, SecurityTransaction } from '../types/security';
 
 const securitiesRouter = express.Router();
 
@@ -100,18 +100,113 @@ securitiesRouter.get('/:id', async (req: Request, res: Response) => {
 //   })
 // });
 
-securitiesRouter.post('/add/:id', async (req: Request, res: Response) => {
-  const symbol = String(req.params.id);
+securitiesRouter.post('/add/:symbol', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
   const { isin } = req.body;
+  const security = await yahooFinance.findOne(symbol, isin);
+  console.log(security)
 
-  yahooFinance.findOne(symbol, isin, (err: Error, order: Security) => {
+  securityModel.create(security, (err: Error, security: Security) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
 
-    res.status(200).json(order);
-    // res.status(200).json({"data": order});
+    res.status(200).json(security);
   });
+});
+
+securitiesRouter.post('/add-multiple', async (req: Request, res: Response) => {
+  const securities: Security[] = req.body.map(async item => {
+    console.log(item);
+    const { symbol, isin } = item;
+    const security = await yahooFinance.findOne(symbol, isin);
+
+    return security;
+  });
+
+  const securitiesResult = await Promise.all(securities);
+
+  securityModel.createMultiple(securitiesResult, (err: Error, ids: number[]) => {
+    if (err) { res.status(500).json({ message: err.message, data: securitiesResult }); return; }
+    res.status(200).json(ids);
+  });
+  // res.status(200).json(securitiesResult);
+  // const security = await yahooFinance.findOne(symbol, isin);
+  // console.log(security)
+
+  // securityModel.create(security, (err: Error, security: Security) => {
+  //   if (err) {
+  //     return res.status(500).json({ message: err.message });
+  //   }
+
+  //   res.status(200).json(security);
+  // });
+});
+
+securitiesRouter.put('/history/:symbol', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
+
+  try {
+    securityModel.findOne(symbol, async (err: Error, security: Security) => {
+      console.log(err, security);
+      const test = await yahooFinance.getHistory(symbol);
+      const history: SecurityQuote[] = test.map(row => ({
+        ...row,
+        security_id: security.id,
+      }));
+
+      securityModel.update_history(history, (err: Error, id: number) => {
+        if (err) { throw err; }
+
+        res.status(200).json({ data: test });
+      });
+    })
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+securitiesRouter.post('/transaction', async (req: Request, res: Response) => {
+  const transaction =req.body as SecurityTransaction;
+
+  try {
+    securityModel.findOne(transaction.symbol, async (err: Error, security: Security) => {
+      securityModel.createTransaction({...transaction, security_id: security.id}, (err: Error, success: number) => {
+        if (err) { throw err; }
+        res.status(200).json({ data: success });
+      });
+    })
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message })
+  }
+});
+
+securitiesRouter.post('/transaction-multiple', async (req: Request, res: Response) => {
+  const transactions = req.body as SecurityTransaction[];
+
+  try {
+    const result = await Promise.all(transactions.map(item => {
+      return new Promise((resolve, reject) => {
+        securityModel.findOne(item.symbol, async (err: Error, security: Security) => {
+          if (item.currency === 'CHF') {
+            securityModel.createTransaction({...item, security_id: security.id}, (err: Error, success: number) => {
+              if (err) { reject(err); }
+              resolve(success);
+            });
+          } else {
+            securityModel.createTransactionForeign({...item, security_id: security.id}, (err: Error, success: number) => {
+              if (err) { reject(err); }
+              resolve(success);
+            });
+          }
+        });
+      });
+    }));
+
+    res.status(200).json({ data: result });
+  } catch (err: any) {
+    return res.status(500).json({ message: err.message })
+  }
 });
 
 export { securitiesRouter };
