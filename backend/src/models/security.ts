@@ -3,7 +3,8 @@ import { db } from '../db';
 import { Security, SecurityQuote, SecurityTransaction } from '../types/security';
 import { mysql as sql } from 'yesql';
 
-export const findOne = (symbol: string, callback: Function) => {
+
+export const findOne = (symbol: string): Promise<Security> => {
   const queryString = sql(`
     SELECT
       s.id,
@@ -17,82 +18,92 @@ export const findOne = (symbol: string, callback: Function) => {
     FROM security AS s
     WHERE s.symbol=:symbol
   `);
+  const sqlQuery = queryString({ symbol: symbol });
 
-  db.query(queryString({ symbol: symbol }), (err, result) => {
-    if (err) { callback(err); return; }
+  return new Promise((resolve, reject) => {
+    db.query(sqlQuery, (err, result) => {
+      if (err) { reject(err); return; }
 
-    const row = (<RowDataPacket>result)[0];
-    const security: Security = {
-      id: row.id,
-      symbol: row.symbol,
-      currency: row.currency,
-      quoteType: row.quote_type,
-      isin: row.isin,
-      valor: row.valor,
-      nameShort: row.name_short,
-      nameLong: row.name_long,
-      info: row.info,
-    };
-    callback(null, security);
+      const row = (<RowDataPacket>result)[0];
+      const security: Security = {
+        id: row.id,
+        symbol: row.symbol,
+        currency: row.currency,
+        quoteType: row.quote_type,
+        isin: row.isin,
+        valor: row.valor,
+        nameShort: row.name_short,
+        nameLong: row.name_long,
+        info: row.info,
+      };
+      resolve(security);
+    });
   });
 };
 
-export const create = (security: Security, callback: Function) => {
+export const create = (security: Security): Promise<number> => {
   const queryString = sql(`
     INSERT INTO security (symbol, currency, quote_type, isin, valor, name_short, name_long, info)
     VALUES (:symbol, :currency, :quoteType, :isin, :valor, :nameShort, :nameLong, :info)
+    ON DUPLICATE KEY UPDATE isin=:isin, valor=:valor, info=:info
   `);
 
-  db.query(
-    queryString({ symbol: security.symbol, currency: security.currency, quoteType: security.quoteType, isin: security.isin, valor: security.valor, nameShort: security.nameShort, nameLong: security.nameLong, info: JSON.stringify(security.info) }),
-    (err, result) => {
-      if (err != undefined) { callback(err); return;}
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString({ ...security, valor: undefined, info: JSON.stringify(security.info) }),
+      (err, result) => {
+        if (err != undefined) { reject(err); return; }
 
-      const { insertId } = <OkPacket>result;
-      callback(null, insertId);
-    },
-  );
+        const { insertId } = <OkPacket>result;
+        resolve(insertId);
+      },
+    );
+  });
 };
 
-export const createMultiple = (securities: Security[], callback: Function) => {
+export const createMultiple = (securities: Security[]): Promise<string> => {
   const queryString = `
     INSERT INTO security (symbol, currency, quote_type, isin, valor, name_short, name_long, info)
     VALUES ?
     ON DUPLICATE KEY UPDATE isin=VALUES(isin), valor=VALUES(valor), info=VALUES(info)
   `;
+  console.log(securities);
 
-  db.query(
-    queryString,
-    [securities.map(item => [item.symbol, item.currency, item.quoteType, item.isin, item.valor, item.nameShort, item.nameLong, JSON.stringify(item.info)])],
-    (err, result) => {
-      if (err != undefined) { callback(err); return;}
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString,
+      [securities.map(item => [item.symbol, item.currency, item.quoteType, item.isin, item.valor, item.nameShort, item.nameLong, JSON.stringify(item.info)])],
+      (err, result) => {
+        if (err != undefined) { reject(err); return; }
 
-      const { insertId } = <OkPacket>result;
-      callback(null, insertId);
-    },
-  );
+        console.log(result)
+        resolve(`inserted-rows ${(<OkPacket>result).affectedRows}`);
+      },
+    );
+  });
 };
 
-export const update_history = (history: SecurityQuote[], callback: Function) => {
+export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
   const queryString = `
     INSERT INTO security_history (security_id, date, high, low, open, close, adjclose, volume)
     VALUES ?
     ON DUPLICATE KEY UPDATE high=VALUES(high), low=VALUES(low), open=VALUES(open), close=VALUES(close), adjclose=VALUES(adjclose), volume=VALUES(volume)
   `;
 
-  db.query(
-    queryString,
-    [history.map(item => [item.security_id, item.date, item.high, item.low, item.open, item.close, item.adjClose, item.volume])],
-    (err, result) => {
-      if (err != undefined) { callback(err); return;}
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString,
+      [history.map(item => [item.security_id, item.date, item.high, item.low, item.open, item.close, item.adjClose, item.volume])],
+      (err, result) => {
+        if (err != undefined) { reject(err); return; }
 
-      const { insertId } = <OkPacket>result;
-      callback(null, insertId);
-    }
-  )
+        resolve(`inserted-rows ${(<OkPacket>result).affectedRows}`);
+      }
+    )
+  });
 };
 
-export const createTransaction = (securityTransaction: SecurityTransaction, callback: Function) => {
+export const createTransaction = (securityTransaction: SecurityTransaction): Promise<number[]> => {
   const queryString = sql(`
     INSERT INTO money (currency, value, fee, tax)
     VALUES (:currency, :total, :fee, :tax);
@@ -100,20 +111,22 @@ export const createTransaction = (securityTransaction: SecurityTransaction, call
     VALUES (:security_id, :date, :type, :account_id, LAST_INSERT_ID(), :price, :amount);
   `);
 
-  db.query(
-    queryString({ ...securityTransaction }),
-    (err, result) => {
-      if (err != undefined) { callback(err); return;}
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString({ ...securityTransaction }),
+      (err, result) => {
+        if (err != undefined) { reject(err); return; }
 
-      const { insertId } = <OkPacket>result;
-      callback(null, insertId);
-    },
-  );
+        const insertedIds = (<OkPacket[]>result).map(item => item.insertId);
+        resolve(insertedIds);
+      },
+    );
+  });
 };
 
 
 
-export const createTransactionForeign = (securityTransaction: SecurityTransaction, callback: Function) => {
+export const createTransactionForeign = (securityTransaction: SecurityTransaction): Promise<number[]> => {
   const queryString = sql(`
     INSERT INTO money (currency, value, fee, tax)
     VALUES (:currency, :total + :fee + :tax, 0, 0);
@@ -135,15 +148,47 @@ export const createTransactionForeign = (securityTransaction: SecurityTransactio
     VALUES (:security_id, :date, :type, :account_id, @money_trade, :price, :amount, @account_transaction);
   `);
 
-  console.log(queryString({ ...securityTransaction }));
-  db.query(
-    queryString({ ...securityTransaction }),
-    (err, result) => {
-      if (err != undefined) { callback(err); return;}
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString({ ...securityTransaction }),
+      (err, result) => {
+        if (err != undefined) { reject(err); return; }
 
-      const { insertId } = <OkPacket>result;
-      callback(null, insertId);
-    },
-  );
+        const insertedIds = (<OkPacket[]>result).map(item => item.insertId);
+        resolve(insertedIds);
+      },
+    );
+  });
 };
 
+export const findTrades = () => {
+  const queryString = `
+    SELECT
+      s.symbol,
+      s.currency,
+      s.entryPrice,
+      s.exitPrice,
+      s.number
+    FROM trade AS s
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString,
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const trades = (<RowDataPacket>result).map(item => {
+          return {
+            symbol: item.symbol,
+            currency: item.currency,
+            entryPrice: item.entry_rice,
+            extitPrice: item.exit_price,
+            number: item.number,
+          };
+        });
+        resolve(trades);
+      }
+    );
+  });
+};

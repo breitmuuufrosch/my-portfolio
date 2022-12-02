@@ -4,7 +4,7 @@ import * as bodyParser from 'body-parser';
 import cors from 'cors';
 import * as path from 'path';
 import { currencyRouter } from './routes/currencyRouter';
-import { securitiesRouter } from './routes/securitiesRouter';
+import { securityRouter } from './routes/securityRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
@@ -64,7 +64,7 @@ app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use('/currencies', currencyRouter);
-app.use('/securities', securitiesRouter);
+app.use('/securities', securityRouter);
 
 app.listen(port, () => {
   console.log('Node server started running');
