@@ -1,6 +1,8 @@
 import React from 'react';
 import './App.css';
+import Button from '@mui/material/Button';
 import { DividendTotal, getDividends } from './types/dividends';
+import Dashboard from './dashboard/Dashboard';
 
 function App() {
   const [dividends, setDividends] = React.useState<DividendTotal | null>(null);
@@ -14,8 +16,9 @@ function App() {
 
   return (
     <div className="App">
+      <Dashboard />
       <div>
-        { dividends?.all.map((d) => (
+        {dividends?.all.map((d) => (
           <li key={d.symbol}>
             {d.symbol}
             {' '}
@@ -30,6 +33,7 @@ function App() {
         {' '}
         {(Math.round((dividends?.total ?? 0) * 100) / 100).toFixed(2)}
       </div>
+      <Button>Test</Button>
     </div>
   );
 }
