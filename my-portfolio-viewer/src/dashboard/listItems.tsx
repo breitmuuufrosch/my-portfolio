@@ -1,19 +1,19 @@
 import * as React from 'react';
+import Link from '@mui/material/Link';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import ListSubheader from '@mui/material/ListSubheader';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import PeopleIcon from '@mui/icons-material/People';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import LayersIcon from '@mui/icons-material/Layers';
+import SavingsIcon from '@mui/icons-material/Savings';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import { Link } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 
 export const mainListItems = (
   <>
-    <Link to="/">
+    <Link component={RouterLink} to="/">
       <ListItemButton>
         <ListItemIcon>
           <DashboardIcon />
@@ -21,32 +21,30 @@ export const mainListItems = (
         <ListItemText primary="Dashboard" />
       </ListItemButton>
     </Link>
-    <Link to="/something">
+    <Link component={RouterLink} to="/accounts">
       <ListItemButton>
         <ListItemIcon>
-          <ShoppingCartIcon />
+          <SavingsIcon />
+        </ListItemIcon>
+        <ListItemText primary="Accounts" />
+      </ListItemButton>
+    </Link>
+    <Link component={RouterLink} to="/securities">
+      <ListItemButton>
+        <ListItemIcon>
+          <InventoryIcon />
         </ListItemIcon>
         <ListItemText primary="Security" />
       </ListItemButton>
     </Link>
-    <ListItemButton>
-      <ListItemIcon>
-        <PeopleIcon />
-      </ListItemIcon>
-      <ListItemText primary="Trades" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <BarChartIcon />
-      </ListItemIcon>
-      <ListItemText primary="Reports" />
-    </ListItemButton>
-    <ListItemButton>
-      <ListItemIcon>
-        <LayersIcon />
-      </ListItemIcon>
-      <ListItemText primary="Integrations" />
-    </ListItemButton>
+    <Link component={RouterLink} to="/trades">
+      <ListItemButton>
+        <ListItemIcon>
+          <ShowChartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Trades" />
+      </ListItemButton>
+    </Link>
   </>
 );
 

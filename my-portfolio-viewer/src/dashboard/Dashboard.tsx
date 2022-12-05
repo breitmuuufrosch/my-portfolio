@@ -4,7 +4,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { Chart } from './Chart';
 import { Deposits } from './Deposits';
-import { Orders } from './Trades';
+import { Trades } from './Trades';
 
 function DashboardContent() {
   return (
@@ -36,10 +36,10 @@ function DashboardContent() {
             <Deposits />
           </Paper>
         </Grid>
-        {/* Recent Orders */}
+        {/* Recent Trades */}
         <Grid item xs={12}>
           <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-            <Orders />
+            <Trades />
           </Paper>
         </Grid>
       </Grid>

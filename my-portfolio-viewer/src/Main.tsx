@@ -1,5 +1,8 @@
 import * as React from 'react';
 import { styled, createTheme, ThemeProvider } from '@mui/material/styles';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 import CssBaseline from '@mui/material/CssBaseline';
 import MuiDrawer from '@mui/material/Drawer';
 import Box from '@mui/material/Box';
@@ -19,7 +22,8 @@ import { Routes, Route } from 'react-router-dom';
 import { mainListItems, secondaryListItems } from './dashboard/listItems';
 
 import { Dashboard } from './dashboard/Dashboard';
-import { Dashboard as Dashboard2 } from './dashboard/Dashboard2';
+import { Trades } from './dashboard/Trades';
+import { Accounts } from './dashboard/Accounts';
 
 const drawerWidth = 240;
 
@@ -85,7 +89,18 @@ function Copyright(props: any) {
   );
 }
 
-const mdTheme = createTheme();
+const mdTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+  components: {
+    MuiLink: {
+      defaultProps: {
+        underline: 'none',
+      },
+    },
+  },
+});
 
 function Main() {
   const [open, setOpen] = React.useState(true);
@@ -163,10 +178,17 @@ function Main() {
           }}
         >
           <Toolbar />
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/something" element={<Dashboard2 />} />
-          </Routes>
+          <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+            <Grid item xs={12}>
+              <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/accounts" element={<Accounts />} />
+                  <Route path="/trades" element={<Trades />} />
+                </Routes>
+              </Paper>
+            </Grid>
+          </Container>
           <Copyright sx={{ pt: 4 }} />
         </Box>
       </Box>
