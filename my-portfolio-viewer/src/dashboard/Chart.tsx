@@ -8,7 +8,7 @@ import {
   Label,
   ResponsiveContainer,
 } from 'recharts';
-import Title from './Title';
+import { Title } from './Title';
 
 // Generate Sales Data
 function createData(time: string, amount?: number) {
@@ -27,7 +27,7 @@ const data = [
   createData('24:00', undefined),
 ];
 
-export default function Chart() {
+export function Chart() {
   const theme = useTheme();
 
   return (

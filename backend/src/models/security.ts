@@ -1,8 +1,8 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
+import { mysql as sql } from 'yesql';
 import { db } from '../db';
 import { Security, SecurityQuote, SecurityTransaction } from '../types/security';
-import { mysql as sql } from 'yesql';
-
+import { Trade } from '../types/trade';
 
 export const findOne = (symbol: string): Promise<Security> => {
   const queryString = sql(`
@@ -18,7 +18,7 @@ export const findOne = (symbol: string): Promise<Security> => {
     FROM security AS s
     WHERE s.symbol=:symbol
   `);
-  const sqlQuery = queryString({ symbol: symbol });
+  const sqlQuery = queryString({ symbol });
 
   return new Promise((resolve, reject) => {
     db.query(sqlQuery, (err, result) => {
@@ -52,7 +52,7 @@ export const create = (security: Security): Promise<number> => {
     db.query(
       queryString({ ...security, valor: undefined, info: JSON.stringify(security.info) }),
       (err, result) => {
-        if (err != undefined) { reject(err); return; }
+        if (err) { reject(err); return; }
 
         const { insertId } = <OkPacket>result;
         resolve(insertId);
@@ -67,16 +67,24 @@ export const createMultiple = (securities: Security[]): Promise<string> => {
     VALUES ?
     ON DUPLICATE KEY UPDATE isin=VALUES(isin), valor=VALUES(valor), info=VALUES(info)
   `;
-  console.log(securities);
 
   return new Promise((resolve, reject) => {
     db.query(
       queryString,
-      [securities.map(item => [item.symbol, item.currency, item.quoteType, item.isin, item.valor, item.nameShort, item.nameLong, JSON.stringify(item.info)])],
+      [
+        securities.map((item) => [
+          item.symbol,
+          item.currency,
+          item.quoteType,
+          item.isin,
+          item.valor,
+          item.nameShort,
+          item.nameLong, JSON.stringify(item.info),
+        ]),
+      ],
       (err, result) => {
-        if (err != undefined) { reject(err); return; }
+        if (err) { reject(err); return; }
 
-        console.log(result)
         resolve(`inserted-rows ${(<OkPacket>result).affectedRows}`);
       },
     );
@@ -87,19 +95,36 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
   const queryString = `
     INSERT INTO security_history (security_id, date, high, low, open, close, adjclose, volume)
     VALUES ?
-    ON DUPLICATE KEY UPDATE high=VALUES(high), low=VALUES(low), open=VALUES(open), close=VALUES(close), adjclose=VALUES(adjclose), volume=VALUES(volume)
+    ON DUPLICATE KEY UPDATE
+      high=VALUES(high),
+      low=VALUES(low),
+      open=VALUES(open),
+      close=VALUES(close),
+      adjclose=VALUES(adjclose),
+      volume=VALUES(volume)
   `;
 
   return new Promise((resolve, reject) => {
     db.query(
       queryString,
-      [history.map(item => [item.security_id, item.date, item.high, item.low, item.open, item.close, item.adjClose, item.volume])],
+      [
+        history.map((item) => [
+          item.security_id,
+          item.date,
+          item.high,
+          item.low,
+          item.open,
+          item.close,
+          item.adjClose,
+          item.volume,
+        ]),
+      ],
       (err, result) => {
-        if (err != undefined) { reject(err); return; }
+        if (err) { reject(err); return; }
 
         resolve(`inserted-rows ${(<OkPacket>result).affectedRows}`);
-      }
-    )
+      },
+    );
   });
 };
 
@@ -115,16 +140,14 @@ export const createTransaction = (securityTransaction: SecurityTransaction): Pro
     db.query(
       queryString({ ...securityTransaction }),
       (err, result) => {
-        if (err != undefined) { reject(err); return; }
+        if (err) { reject(err); return; }
 
-        const insertedIds = (<OkPacket[]>result).map(item => item.insertId);
+        const insertedIds = (<OkPacket[]>result).map((item) => item.insertId);
         resolve(insertedIds);
       },
     );
   });
 };
-
-
 
 export const createTransactionForeign = (securityTransaction: SecurityTransaction): Promise<number[]> => {
   const queryString = sql(`
@@ -144,7 +167,9 @@ export const createTransactionForeign = (securityTransaction: SecurityTransactio
     VALUES (:date, :account_id_chf, @account_transfer_from, :account_id, @account_transfer_to);
     SET @account_transaction := LAST_INSERT_ID();
 
-    INSERT INTO security_transaction (security_id, date, type, account_id, money_id, price, amount, account_transaction_id)
+    INSERT INTO security_transaction (
+      security_id, date, type, account_id, money_id, price, amount, account_transaction_id
+    )
     VALUES (:security_id, :date, :type, :account_id, @money_trade, :price, :amount, @account_transaction);
   `);
 
@@ -152,16 +177,16 @@ export const createTransactionForeign = (securityTransaction: SecurityTransactio
     db.query(
       queryString({ ...securityTransaction }),
       (err, result) => {
-        if (err != undefined) { reject(err); return; }
+        if (err) { reject(err); return; }
 
-        const insertedIds = (<OkPacket[]>result).map(item => item.insertId);
+        const insertedIds = (<OkPacket[]>result).map((item) => item.insertId);
         resolve(insertedIds);
       },
     );
   });
 };
 
-export const findTrades = () => {
+export const findTrades = (): Promise<Trade[]> => {
   const queryString = `
     SELECT
       s.symbol,
@@ -178,17 +203,15 @@ export const findTrades = () => {
       (err, result) => {
         if (err) { reject(err); return; }
 
-        const trades = (<RowDataPacket>result).map(item => {
-          return {
-            symbol: item.symbol,
-            currency: item.currency,
-            entryPrice: item.entry_rice,
-            extitPrice: item.exit_price,
-            number: item.number,
-          };
-        });
+        const trades = (<RowDataPacket>result).map((item) => ({
+          symbol: item.symbol,
+          currency: item.currency,
+          entryPrice: item.entry_rice,
+          extitPrice: item.exit_price,
+          number: item.number,
+        }));
         resolve(trades);
-      }
+      },
     );
   });
 };

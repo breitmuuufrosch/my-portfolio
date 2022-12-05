@@ -1,4 +1,5 @@
 import yahooFinance from 'yahoo-finance2';
+import { HistoricalHistoryResult } from 'yahoo-finance2/dist/esm/src/modules/historical';
 import { Security, SecurityQuote } from '../types/security';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
@@ -46,7 +47,7 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
 // }
 
 export const getDividends = async (symbol: string) => {
-  const order: any = await yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] });
+  const order = await yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] });
   const dividend = {
     symbol,
     dividendRate: order.summaryDetail.dividendRate,
@@ -60,7 +61,7 @@ export const getDividends = async (symbol: string) => {
 };
 
 export const getHistory = async (symbol: string): Promise<SecurityQuote[]> => {
-  const test: any = await yahooFinance.historical(symbol, {period1: '2000-01-01'});
+  const test: HistoricalHistoryResult = await yahooFinance.historical(symbol, { period1: '2000-01-01' });
 
-  return test;
+  return test.map((item) => item as SecurityQuote);
 };
