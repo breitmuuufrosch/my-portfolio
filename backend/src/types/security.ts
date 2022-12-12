@@ -8,6 +8,7 @@ export interface Security {
   isin?: string,
   valor?: string,
   info: { [id: string]: string },
+  holdings?: number,
 }
 
 export interface SecurityQuote {

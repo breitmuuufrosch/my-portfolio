@@ -61,15 +61,10 @@ export const findAll = () => {
         if (err) { reject(err); return; }
 
         const rows = <RowDataPacket[]>result;
-        const currencies: Currency[] = [];
-
-        rows.forEach((row) => {
-          const currency: Currency = {
-            symbol: row.symbol,
-            description: row.description,
-          };
-          currencies.push(currency);
-        });
+        const currencies: Currency[] = rows.map((row) => ({
+          symbol: row.symbol,
+          description: row.description,
+        }));
         resolve(currencies);
       },
     );

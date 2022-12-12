@@ -61,7 +61,9 @@ export const getDividends = async (symbol: string) => {
 };
 
 export const getHistory = async (symbol: string): Promise<SecurityQuote[]> => {
-  const test: HistoricalHistoryResult = await yahooFinance.historical(symbol, { period1: '2000-01-01' });
-
-  return test.map((item) => item as SecurityQuote);
+  return new Promise((resolve, reject) => {
+    yahooFinance.historical(symbol, { period1: '2000-01-01' })
+      .then((quotes) => resolve(quotes.map((item) => item as SecurityQuote)))
+      .catch(() => resolve([]));
+  });
 };

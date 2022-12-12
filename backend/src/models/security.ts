@@ -14,30 +14,80 @@ export const findOne = (symbol: string): Promise<Security> => {
       s.isin,
       s.valor,
       s.name_short,
-      s.name_long
+      s.name_long,
+      s.info
     FROM security AS s
     WHERE s.symbol=:symbol
   `);
   const sqlQuery = queryString({ symbol });
 
   return new Promise((resolve, reject) => {
-    db.query(sqlQuery, (err, result) => {
-      if (err) { reject(err); return; }
+    db.query(
+      sqlQuery,
+      (err, result) => {
+        try {
+          if (err) { reject(err); return; }
 
-      const row = (<RowDataPacket>result)[0];
-      const security: Security = {
-        id: row.id,
-        symbol: row.symbol,
-        currency: row.currency,
-        quoteType: row.quote_type,
-        isin: row.isin,
-        valor: row.valor,
-        nameShort: row.name_short,
-        nameLong: row.name_long,
-        info: row.info,
-      };
-      resolve(security);
-    });
+          const row = (<RowDataPacket>result)[0];
+          const security: Security = {
+            id: row.id,
+            symbol: row.symbol,
+            currency: row.currency,
+            quoteType: row.quote_type,
+            isin: row.isin,
+            valor: row.valor,
+            nameShort: row.name_short,
+            nameLong: row.name_long,
+            info: row.info,
+          };
+          resolve(security);
+        } catch (err: any) {
+          reject(`${symbol}: ${err}`);
+        }
+      }
+    );
+  });
+};
+
+export const findAll = (): Promise<Security[]> => {
+  const queryString = `
+    SELECT
+      s.id,
+      s.symbol,
+      s.currency,
+      s.quote_type,
+      s.isin,
+      s.valor,
+      s.name_short,
+      s.name_long,
+      s.info,
+      t.number
+    FROM security AS s
+    LEFT JOIN trade AS t ON t.id = s.id
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString,
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const rows = <RowDataPacket[]>result;
+        const security: Security[] = rows.map((row) => ({
+          id: row.id,
+          symbol: row.symbol,
+          currency: row.currency,
+          quoteType: row.quote_type,
+          isin: row.isin,
+          valor: row.valor,
+          nameShort: row.name_short,
+          nameLong: row.name_long,
+          info: row.info,
+          holdings: row.number,
+        }));
+        resolve(security);
+      }
+    );
   });
 };
 
@@ -127,6 +177,31 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
     );
   });
 };
+
+export const doesExistTransaction = (securityTransaction: SecurityTransaction): Promise<boolean> => {
+  const queryString = sql(`
+    SELECT *
+    FROM security_transaction AS st
+    WHERE st.security_id = :security_id
+      AND st.date = :date
+      AND st.type = :type
+      AND st.account_id = :account_id
+      AND st.price = :price
+      AND st.amount = :amount
+  `);
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString({ ...securityTransaction }),
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        console.log(result);
+        resolve((<OkPacket[]>result).length > 0);
+      }
+    );
+  });
+}
 
 export const createTransaction = (securityTransaction: SecurityTransaction): Promise<number[]> => {
   const queryString = sql(`

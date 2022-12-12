@@ -19,15 +19,25 @@ transactionRouter.post('/multiple', async (req: Request, res: Response) => {
   Promise.all(transactions.map((item) => new Promise((resolve, reject) => {
     securityModel.findOne(item.symbol)
       .then((security: Security) => {
-        if (item.currency === 'CHF') {
-          securityModel.createTransaction({ ...item, security_id: security.id })
-            .then(resolve)
-            .catch(reject);
-        } else {
-          securityModel.createTransactionForeign({ ...item, security_id: security.id })
-            .then(resolve)
-            .catch(reject);
-        }
+        const updatedSecurity = { ...item, security_id: security.id };
+
+        securityModel.doesExistTransaction(updatedSecurity)
+          .then((exists: boolean) => {
+            if (exists) {
+              resolve('duplicate');
+              return;
+            }
+            
+            if (item.currency === 'CHF') {
+              securityModel.createTransaction(updatedSecurity)
+                .then(resolve)
+                .catch(reject);
+            } else {
+              securityModel.createTransactionForeign(updatedSecurity)
+                .then(resolve)
+                .catch(reject);
+            }
+          })
       })
       .catch((err: Error) => { reject(err); });
   })))
