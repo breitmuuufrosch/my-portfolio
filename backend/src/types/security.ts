@@ -43,3 +43,30 @@ export interface SecurityTransactionForeign extends SecurityTransaction {
   tax_chf: number,
   account_id_chf: number,
 }
+
+export enum AccountTransactionType {
+  payment,
+  payout,
+  transfer,
+  fee,
+  fee_refund,
+  tax,
+  tax_refund,
+  interest,
+  interest_charge,
+}
+
+export interface AccountTransaction {
+  date: Date,
+  type: AccountTransactionType,
+  from_account_id: number,
+  from_currency: string,
+  from_total: number,
+  from_fee: number,
+  from_tax: number,
+  to_account_id: number,
+  to_currency: string,
+  to_total: number,
+  to_fee: number,
+  to_tax: number,
+}

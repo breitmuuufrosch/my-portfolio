@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
+import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
 import { Security } from '../types/security';
 import { Trade } from '../types/trade';
@@ -14,7 +15,7 @@ securityRouter.use('/transaction', transactionRouter);
 securityRouter.get('/dividends', async (req: Request, res: Response) => {
   type TradeInfo = [string, number];
 
-  securityModel.findTrades()
+  tradeModel.findAll()
     .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.number]))
     .then((securities: TradeInfo[]) => {
       const allDividends = securities.map((trade: TradeInfo) => (
@@ -27,12 +28,13 @@ securityRouter.get('/dividends', async (req: Request, res: Response) => {
                 resolve({ symbol: trade[0], total: 0 });
               }
             })
-            .catch((err: Error) => reject(err));
+            .catch((err: Error) => resolve({ symbol: trade[0], total: 0 }));
         })
       ));
 
       Promise.all(allDividends)
         .then((divResult) => {
+          console.log(divResult);
           let total = 0;
           divResult.forEach((dividend) => {
             total += Number.isNaN(dividend.total) ? 0 : dividend.total;
@@ -40,7 +42,7 @@ securityRouter.get('/dividends', async (req: Request, res: Response) => {
 
           res.status(200).json({ all: divResult, total });
         })
-        .catch((err: Error) => err);
+        .catch((err: Error) => { throw err; });
     })
     .catch((err: Error) => {
       res.status(500).json({ message: err.message });

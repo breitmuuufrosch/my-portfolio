@@ -38,6 +38,7 @@ export function Trades() {
             <TableCell>Entry price</TableCell>
             <TableCell>Entry price (all)</TableCell>
             <TableCell>Exit price</TableCell>
+            <TableCell>Last Price</TableCell>
             <TableCell>P/L</TableCell>
           </TableRow>
         </TableHead>
@@ -51,7 +52,10 @@ export function Trades() {
               <TableCell>{row.entryPrice}</TableCell>
               <TableCell>{row.entryPriceAll}</TableCell>
               <TableCell>{row.exitPrice}</TableCell>
-              <TableCell>{rounding(row.exitPrice - row.entryPriceAll)}</TableCell>
+              <TableCell>{row.lastPrice}</TableCell>
+              <TableCell style={{ color: (row.exitPrice - row.entryPriceAll > 0) ? 'green' : 'red' }}>
+                {rounding(row.exitPrice - row.entryPriceAll)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -79,6 +83,7 @@ export function Trades() {
                   .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
               }
             </TableCell>
+            <TableCell />
             <TableCell>
               {
                 rounding(trades?.filter((row) => row.currency === 'CHF')
@@ -109,6 +114,7 @@ export function Trades() {
                   .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
               }
             </TableCell>
+            <TableCell />
             <TableCell>
               {
                 rounding(trades?.filter((row) => row.currency === 'EUR')
@@ -139,6 +145,7 @@ export function Trades() {
                   .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
               }
             </TableCell>
+            <TableCell />
             <TableCell>
               {
                 rounding(trades?.filter((row) => row.currency === 'USD')

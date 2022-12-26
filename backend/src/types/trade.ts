@@ -6,5 +6,6 @@ export interface Trade {
   entryPrice: number,
   entryPriceAll: number,
   number: number,
-  exitPrice: number
+  exitPrice: number,
+  lastPrice: number,
 }

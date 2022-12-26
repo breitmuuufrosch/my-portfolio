@@ -12,6 +12,7 @@ export const findAll = (): Promise<Trade[]> => {
     entry_price,
     entry_price_all,
     number,
+    last_price,
     exit_price
   FROM trade
   `;
@@ -31,6 +32,7 @@ export const findAll = (): Promise<Trade[]> => {
           entryPrice: row.entry_price,
           entryPriceAll: row.entry_price_all,
           number: row.number,
+          lastPrice: row.last_price,
           exitPrice: row.exit_price,
         }));
         resolve(trades);

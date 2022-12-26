@@ -34,7 +34,12 @@ export function Accounts() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {accountSummary?.map((row) => (
+          {accountSummary?.sort((a, b) => {
+            if (a.name === b.name) {
+              return a.currency.localeCompare(b.currency);
+            }
+            return a.name.localeCompare(b.name);
+          }).map((row) => (
             <TableRow key={row.id}>
               <TableCell>{row.name}</TableCell>
               <TableCell>{row.currency}</TableCell>

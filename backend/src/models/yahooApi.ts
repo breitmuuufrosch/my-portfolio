@@ -46,18 +46,23 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
 //     }
 // }
 
-export const getDividends = async (symbol: string) => {
-  const order = await yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] });
-  const dividend = {
-    symbol,
-    dividendRate: order.summaryDetail.dividendRate,
-    dividendYield: order.summaryDetail.dividendYield,
-    exDividendDate: order.summaryDetail.exDividendDate,
-    currencty: order.summaryDetail.currency,
-    total: 0,
-    all: order,
-  };
-  return dividend;
+export const getDividends = async (symbol: string): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] })
+    .then((order) => {
+      const dividend = {
+        symbol,
+        dividendRate: order.summaryDetail.dividendRate,
+        dividendYield: order.summaryDetail.dividendYield,
+        exDividendDate: order.summaryDetail.exDividendDate,
+        currencty: order.summaryDetail.currency,
+        total: 0,
+        all: order,
+      };
+      resolve(dividend);
+    })
+    .catch(reject);
+  });
 };
 
 export const getHistory = async (symbol: string): Promise<SecurityQuote[]> => {
