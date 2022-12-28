@@ -177,3 +177,46 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
     );
   });
 };
+
+export const getHistory = (security_id: number): Promise<SecurityQuote[]> => {
+  const queryString = sql(`
+    SELECT
+      sh.security_id,
+      sh.date,
+      sh.high,
+      sh.low,
+      sh.open,
+      sh.close,
+      sh.adjclose,
+      sh.volume
+    FROM security_history as sh
+    WHERE
+      sh.security_id = :security_id
+      AND sh.date > '2022-01-01'
+    ORDER BY
+      sh.date
+  `);
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      queryString({ security_id }),
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const rows = <RowDataPacket[]>result;
+        const securityQuotes: SecurityQuote[] = rows.map((row) => ({
+          symbol: row.symbol,
+          security_id: row.security_id,
+          date: row.date,
+          high: row.high,
+          low: row.low,
+          open: row.open,
+          close: row.close,
+          adjClose: row.adjclose,
+          volume: row.volume,
+        }));
+        resolve(securityQuotes);
+      },
+    );
+  })
+} 

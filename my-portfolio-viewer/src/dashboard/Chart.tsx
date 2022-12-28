@@ -8,34 +8,40 @@ import {
   Label,
   ResponsiveContainer,
 } from 'recharts';
+import { SecurityQuote } from '@backend/types/security';
+import { getSecurityQuotes } from 'src/types/service';
 import { Title } from './Title';
 
-// Generate Sales Data
-function createData(time: string, amount?: number) {
-  return { time, amount };
-}
-
-const data = [
-  createData('00:00', 0),
-  createData('03:00', 300),
-  createData('06:00', 600),
-  createData('09:00', 800),
-  createData('12:00', 1500),
-  createData('15:00', 2000),
-  createData('18:00', 2400),
-  createData('21:00', 2400),
-  createData('24:00', undefined),
-];
-
-export function Chart() {
+function Chart(props: {
+  symbol: string,
+}) {
+  const { symbol } = props;
   const theme = useTheme();
+
+  const [dates] = React.useState<Date[]>([new Date(2022, 1, 1), new Date(2022, 12, 31)]);
+  const [securityHistory, setSecurityHistory] = React.useState<SecurityQuote[] | null>(null);
+  const [domain, setDomain] = React.useState<number[]>([0, 1]);
+
+  React.useEffect(() => {
+    console.log('chart', symbol);
+    getSecurityQuotes(symbol).then(
+      (result) => {
+        setSecurityHistory(result);
+        const closeValues = result.map((item) => item.close);
+        const minValue = Math.min(...closeValues);
+        const maxValue = Math.max(...closeValues);
+        const range = maxValue - minValue;
+        setDomain([minValue - (0.02 * range), maxValue + (0.02 * range)]);
+      },
+    );
+  }, [symbol]);
 
   return (
     <>
-      <Title>Today</Title>
+      <Title>{symbol}</Title>
       <ResponsiveContainer>
         <LineChart
-          data={data}
+          data={securityHistory}
           margin={{
             top: 16,
             right: 16,
@@ -44,13 +50,15 @@ export function Chart() {
           }}
         >
           <XAxis
-            dataKey="time"
+            dataKey="date"
             stroke={theme.palette.text.secondary}
             style={theme.typography.body2}
+            ticks={dates.map((item) => item.toLocaleDateString())}
           />
           <YAxis
             stroke={theme.palette.text.secondary}
             style={theme.typography.body2}
+            domain={domain}
           >
             <Label
               angle={270}
@@ -61,13 +69,13 @@ export function Chart() {
                 ...theme.typography.body1,
               }}
             >
-              Sales ($)
+              Price
             </Label>
           </YAxis>
           <Line
             isAnimationActive={false}
             type="monotone"
-            dataKey="amount"
+            dataKey="close"
             stroke={theme.palette.primary.main}
             dot={false}
           />
@@ -76,3 +84,5 @@ export function Chart() {
     </>
   );
 }
+
+export { Chart };

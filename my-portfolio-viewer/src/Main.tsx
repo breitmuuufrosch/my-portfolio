@@ -186,7 +186,7 @@ function Main() {
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/accounts" element={<Accounts />} />
                   <Route path="/securities" element={<Securities />} />
-                  <Route path="/trades" element={<Trades />} />
+                  <Route path="/trades" element={<Trades selectSymbol={() => {}} />} />
                 </Routes>
               </Paper>
             </Grid>

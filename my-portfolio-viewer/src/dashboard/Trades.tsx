@@ -16,7 +16,23 @@ function preventDefault(event: React.MouseEvent) {
 
 const rounding = (value?: number) => Math.round(value * 1000) / 1000;
 
-export function Trades() {
+// const TradesNew = ({selectSymbol: undefined}) => (
+//   <>
+//     <div>yeah</div>
+//   </>
+// );
+// function TradesNew2 = ({selectSymbol: undefined}) => (
+//   <>
+//     <div>yeah</div>
+//   </>
+// );
+
+interface TradesProps {
+  selectSymbol?: (symbol: string) => void,
+}
+
+function Trades({ selectSymbol }: TradesProps) {
+  // const { selectSymbol } = props;
   const [trades, setTrades] = React.useState<Trade[] | null>(null);
 
   React.useEffect(() => {
@@ -45,7 +61,17 @@ export function Trades() {
         <TableBody>
           {trades?.sort((a, b) => a.symbol.localeCompare(b.symbol)).map((row) => (
             <TableRow key={row.symbol}>
-              <TableCell>{row.name}</TableCell>
+              <TableCell>
+                {
+                  selectSymbol
+                    ? (
+                      <Link href="#" onClick={() => selectSymbol(row.symbol)}>
+                        {row.name}
+                      </Link>
+                    )
+                    : row.name
+                }
+              </TableCell>
               <TableCell>{row.symbol}</TableCell>
               <TableCell>{Number(row.number)}</TableCell>
               <TableCell>{row.currency}</TableCell>
@@ -60,99 +86,49 @@ export function Trades() {
           ))}
         </TableBody>
         <TableFooter>
-          <TableRow>
-            <TableCell>CHF</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'CHF')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPrice), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'CHF')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPriceAll), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'CHF')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
-              }
-            </TableCell>
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'CHF')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice - row.entryPriceAll), 0))
-              }
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>EUR</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'EUR')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPrice), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'EUR')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPriceAll), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'EUR')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
-              }
-            </TableCell>
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'EUR')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice - row.entryPriceAll), 0))
-              }
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell>USD</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'USD')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPrice), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'USD')
-                  .reduce((accumulator, row) => accumulator + Number(row.entryPriceAll), 0))
-              }
-            </TableCell>
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'USD')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
-              }
-            </TableCell>
-            <TableCell />
-            <TableCell>
-              {
-                rounding(trades?.filter((row) => row.currency === 'USD')
-                  .reduce((accumulator, row) => accumulator + Number(row.exitPrice - row.entryPriceAll), 0))
-              }
-            </TableCell>
-          </TableRow>
+          {
+            ['CHF', 'EUR', 'USD'].map((currency) => (
+              <TableRow key={currency}>
+                <TableCell>{currency}</TableCell>
+                <TableCell />
+                <TableCell />
+                <TableCell />
+                <TableCell>
+                  {
+                    trades
+                      ? rounding(trades.filter((row) => row.currency === currency)
+                        .reduce((accumulator, row) => accumulator + Number(row.entryPrice), 0))
+                      : ''
+                  }
+                </TableCell>
+                <TableCell>
+                  {
+                    trades
+                      ? rounding(trades.filter((row) => row.currency === currency)
+                        .reduce((accumulator, row) => accumulator + Number(row.entryPriceAll), 0))
+                      : ''
+                  }
+                </TableCell>
+                <TableCell>
+                  {
+                    trades
+                      ? rounding(trades.filter((row) => row.currency === currency)
+                        .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
+                      : ''
+                  }
+                </TableCell>
+                <TableCell />
+                <TableCell>
+                  {
+                    trades
+                      ? rounding(trades.filter((row) => row.currency === currency)
+                        .reduce((accumulator, row) => accumulator + Number(row.exitPrice - row.entryPriceAll), 0))
+                      : ''
+                  }
+                </TableCell>
+              </TableRow>
+            ))
+          }
         </TableFooter>
       </Table>
       <Link color="primary" href="#" onClick={preventDefault} sx={{ mt: 3 }}>
@@ -161,3 +137,9 @@ export function Trades() {
     </>
   );
 }
+
+Trades.defaultProps = {
+  selectSymbol: () => { },
+};
+
+export { Trades };

@@ -22,13 +22,13 @@ export const create = (currency: Currency) => {
 };
 
 export const findOne = (symbol: string) => {
-  const queryString = sql(
-    `SELECT 
-        c.symbol,
-        c.description
-      FROM currency AS c
-      WHERE c.symbol=:symbol`,
-  );
+  const queryString = sql(`
+    SELECT 
+      c.symbol,
+      c.description
+    FROM currency AS c
+    WHERE c.symbol=:symbol
+  `);
 
   return new Promise((resolve, reject) => {
     db.query(

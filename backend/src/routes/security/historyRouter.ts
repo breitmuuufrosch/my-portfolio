@@ -5,6 +5,19 @@ import { Security, SecurityQuote } from '../../types/security';
 
 const historyRouter = express.Router();
 
+historyRouter.get('/:symbol', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
+
+  securityModel.findOne(symbol)
+    .then((security: Security) => {
+      securityModel.getHistory(security.id)
+        .then((securityQuotes: SecurityQuote[]) => res.status(200).json(securityQuotes))
+    })
+    .catch((err: Error) => {
+      res.status(500).json({ message: err.message });
+    });
+});
+
 historyRouter.put('/:symbol', async (req: Request, res: Response) => {
   const symbol = String(req.params.symbol);
 
