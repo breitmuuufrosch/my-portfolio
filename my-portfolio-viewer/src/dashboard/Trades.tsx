@@ -44,6 +44,10 @@ function Trades({ selectSymbol }: TradesProps) {
   return (
     <>
       <Title>Trades</Title>
+      Show Portfolio History
+      <Link href="#" onClick={() => selectSymbol('CHF')}>CHF</Link>
+      <Link href="#" onClick={() => selectSymbol('EUR')}>EUR</Link>
+      <Link href="#" onClick={() => selectSymbol('USD')}>USD</Link>
       <Table size="small">
         <TableHead>
           <TableRow>

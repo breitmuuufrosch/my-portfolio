@@ -1,6 +1,6 @@
 import { AccountSummary } from '@backend/types/account';
 import { Trade } from '@backend/types/trade';
-import { Security, SecurityQuote } from '@backend/types/security';
+import { PorftolioQuote, Security, SecurityQuote } from '@backend/types/security';
 
 export const getServiceData = async <T>(uri: string): Promise<T> => {
   const response = await fetch(uri, {
@@ -22,4 +22,8 @@ export const getSecurities = async (): Promise<Security[]> => (
 
 export const getSecurityQuotes = async (symbol: string): Promise<SecurityQuote[]> => (
   getServiceData<SecurityQuote[]>(`http://localhost:3333/securities/history/${symbol}`)
+);
+
+export const getPortfolioQuotes = async (currency: string): Promise<PorftolioQuote[]> => (
+  getServiceData<PorftolioQuote[]>(`http://localhost:3333/securities/history/portfolio/${currency}`)
 );

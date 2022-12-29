@@ -29,12 +29,12 @@ transactionRouter.post('/multiple', async (req: Request, res: Response) => {
               return;
             }
             
-            if (item.currency === 'CHF' || item.type === 'sell' || item.type === 'posting' || item.type === 'dividend') {
-              transactionModel.createTransaction(updatedSecurity)
+            if (item.hasOwnProperty('exchange_from_currency')) {
+              transactionModel.createTransactionForeign(updatedSecurity)
                 .then(resolve)
                 .catch(reject);
             } else {
-              transactionModel.createTransactionForeign(updatedSecurity)
+              transactionModel.createTransaction(updatedSecurity)
                 .then(resolve)
                 .catch(reject);
             }

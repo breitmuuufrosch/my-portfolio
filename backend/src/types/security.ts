@@ -9,6 +9,8 @@ export interface Security {
   valor?: string,
   info: { [id: string]: string },
   holdings?: number,
+  source: string,
+  sourceUrl?: string,
 }
 
 export interface SecurityQuote {
@@ -20,6 +22,12 @@ export interface SecurityQuote {
   close: number,
   adjClose: number,
   volume: number,
+}
+
+export interface PorftolioQuote {
+  date: Date,
+  value: number,
+  currency: string,
 }
 
 export interface SecurityTransaction {
@@ -38,10 +46,12 @@ export interface SecurityTransaction {
 }
 
 export interface SecurityTransactionForeign extends SecurityTransaction {
-  total_chf: number,
-  fee_chf: number,
-  tax_chf: number,
-  account_id_chf: number,
+  exchange_to_total: number,
+  exchange_from_currency: string,
+  exchange_from_total: number,
+  exchange_from_fee: number,
+  exchange_from_tax: number,
+  exchange_from_account_id: number,
 }
 
 export enum AccountTransactionType {

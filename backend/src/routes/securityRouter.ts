@@ -87,22 +87,23 @@ securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
         .then((security: Security) => {
           if (security.currency !== 'XXX') {
             console.log(symbol, 'ok');
-            resolve(security);
+            return resolve(security);
           }
 
           console.log(symbol, 'nok');
           throw new Error();
         })
         .catch(() => {
-          const { name, quote_type, currency } = item;
           const security = {
-            symbol: symbol,
-            quoteType: quote_type,
-            nameLong: name,
-            nameShort: name,
-            currency,
+            symbol,
+            quoteType: item.quote_type,
+            nameLong: item.name,
+            nameShort: item.name,
+            currency: item.currency,
             isin,
             info: {},
+            source: item.source,
+            sourceUrl: item.source_url
           };
           resolve(security);
         })

@@ -13,7 +13,11 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
     currency: response?.currency || 'XXX',
     quoteType: response?.quoteType,
     info: response,
+    source: 'yahoo',
   };
+  if (security.nameLong === '') {
+    security.nameLong = security.nameShort;
+  }
   return security;
 };
 

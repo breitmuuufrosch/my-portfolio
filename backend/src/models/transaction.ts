@@ -54,11 +54,11 @@ export const createTransaction = (securityTransaction: SecurityTransaction): Pro
 export const createTransactionForeign = (securityTransaction: SecurityTransaction): Promise<number[]> => {
   const queryString = sql(`
     INSERT INTO money (currency, value, fee, tax)
-    VALUES (:currency, :total + :fee + :tax, 0, 0);
+    VALUES (:currency, :exchange_to_total, 0, 0);
     SET @account_transfer_to := LAST_INSERT_ID();
 
     INSERT INTO money (currency, value, fee, tax)
-    VALUES ("CHF", :total_chf, :fee_chf, :tax_chf);
+    VALUES (:exchange_from_currency, :exchange_from_total, :exchange_from_fee, :exchange_from_tax);
     SET @account_transfer_from := LAST_INSERT_ID();
 
     INSERT INTO money (currency, value, fee, tax)
@@ -66,7 +66,7 @@ export const createTransactionForeign = (securityTransaction: SecurityTransactio
     SET @money_trade := LAST_INSERT_ID();
 
     INSERT INTO account_transaction (date, type, from_account_id, from_money_id, to_account_id, to_money_id)
-    VALUES (:date, 'transfer', :account_id_chf, @account_transfer_from, :account_id, @account_transfer_to);
+    VALUES (:date, 'transfer', :exchange_from_account_id, @account_transfer_from, :account_id, @account_transfer_to);
     SET @account_transaction := LAST_INSERT_ID();
 
     INSERT INTO security_transaction (
@@ -92,12 +92,13 @@ export const doesExistAccountTransaction = (accountTransaction: AccountTransacti
   const queryString = sql(`
     SELECT *
     FROM (
-      SELECT act.date, act.from_account_id, act.to_account_id, m_from.value AS from_value, m_to.value AS to_value
+      SELECT act.date, act.type, act.from_account_id, act.to_account_id, m_from.value AS from_value, m_to.value AS to_value
       FROM account_transaction AS act
       LEFT JOIN money AS m_from ON m_from.id = act.from_money_id
       LEFT JOIN money AS m_to ON m_to.id = act.to_money_id
     ) AS act
     WHERE act.date = :date
+      AND act.type = :type
       AND act.from_account_id ${accountTransaction.hasOwnProperty('from_account_id') ? '= ' + accountTransaction.from_account_id : 'IS NULL'}
       AND act.to_account_id ${accountTransaction.hasOwnProperty('to_account_id') ? '= ' + accountTransaction.to_account_id : 'IS NULL'}
       AND act.from_value ${accountTransaction.hasOwnProperty('from_total') ? '= ' + accountTransaction.from_total : 'IS NULL'}
@@ -128,7 +129,7 @@ export const createAccountTransaction = (accountTransaction: AccountTransaction)
 
   const queryStringPayout = sql(`
     INSERT INTO money (currency, value, fee, tax)
-    VALUES (:from_id, :from_total, :from_fee, :from_tax);
+    VALUES (:from_currency, :from_total, :from_fee, :from_tax);
     SET @account_transfer_from := LAST_INSERT_ID();
     
     INSERT INTO account_transaction (date, type, from_account_id, from_money_id, to_account_id, to_money_id)
@@ -141,7 +142,7 @@ export const createAccountTransaction = (accountTransaction: AccountTransaction)
     SET @account_transfer_to := LAST_INSERT_ID();
     
     INSERT INTO money (currency, value, fee, tax)
-    VALUES (:from_id, :from_total, :from_fee, :from_tax);
+    VALUES (:from_currency, :from_total, :from_fee, :from_tax);
     SET @account_transfer_from := LAST_INSERT_ID();
       
     INSERT INTO account_transaction (date, 'type', from_account_id, from_money_id, to_account_id, to_money_id)
