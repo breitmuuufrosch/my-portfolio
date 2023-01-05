@@ -9,4 +9,5 @@ export const db = mysql.createConnection({
   password: process.env.MY_SQL_DB_PASSWORD,
   database: process.env.MY_SQL_DB_DATABASE,
   multipleStatements: true,
+  dateStrings: true,
 });

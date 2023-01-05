@@ -1,7 +1,9 @@
 import express, { Request, Response } from 'express';
-import * as securityModel from "../models/security";
+import * as securityModel from '../models/security';
+import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
 import { Security } from '../types/security';
+import { Trade } from '../types/trade';
 import { historyRouter } from './security/historyRouter';
 import { transactionRouter } from './security/transactionRouter';
 
@@ -10,78 +12,61 @@ const securityRouter = express.Router();
 securityRouter.use('/history', historyRouter);
 securityRouter.use('/transaction', transactionRouter);
 
-securityRouter.get('/', async (req: Request, res: Response) => {
-  // const securities: { [key: string]: number } = {};
-  // securities['ABBN.SW'] = 25;
-  // securities['ACLN.SW'] = 1 + 29;
-  // securities.ADBE = 2;
-  // securities.AMD = 0.265;
-  // securities['BEKN.SW'] = 2;
-  // securities['BYS.SW'] = 1;
-  // securities['RBOT.SW'] = 49;
-  // securities['INRG.SW'] = 40;
-  // securities['SCWS.SW'] = 950;
-  // securities['CSSMIM.SW'] = 1;
-  // securities['JFN.SW'] = 6;
-  // securities['LISN.SW'] = 0.0002;
-  // securities['LOGN.SW'] = 20;
-  // securities.MA = 1;
-  // securities['NOVN.SW'] = 6;
-  // securities.NVDA = 4;
-  // securities['OFN.SW'] = 8;
-  // securities['ESSN.SW'] = 330;
-  // securities.STX = 12 + 9;
-  // securities['SREN.SW'] = 11;
-  // securities['SCMN.SW'] = 1;
-  // securities['SQN.SW'] = 4;
-  // securities['UBI.PA'] = 5.2613;
-  // securities.DIS = 2.2229;
-  // securities.WBD = 15.1172;
-  // securities['DFEA.SW'] = 80;
-  // securities['ZAL.DE'] = 52.622;
-  // securities['ZURN.SW'] = 2;
-  // const allDividends = Object.keys(securities).map(async (key: string) => yahooFinance.getDividends(key));
+securityRouter.get('/dividends', async (req: Request, res: Response) => {
+  type TradeInfo = [string, number];
 
-  securityModel.findTrades()
-    .then((trades: any[]) => {
-      return trades.map(trade => { return [trade.symbol, trade.number] })
-    })
-    .then((securities: any[]) => {
-      const allDividends = securities.map((trade) => {
-        return new Promise<{ symbol: string, total: number }>((resolve, reject) => {
+  tradeModel.findAll()
+    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.number]))
+    .then((securities: TradeInfo[]) => {
+      const allDividends = securities.map((trade: TradeInfo) => (
+        new Promise<{ symbol: string, total: number }>((resolve, reject) => {
           yahooFinance.getDividends(trade[0])
             .then((divResult) => {
               if (Number.isNaN(divResult.dividendRate) === false) {
                 resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1] });
               } else {
-                return resolve({ symbol: trade[0], total: 0 });
+                resolve({ symbol: trade[0], total: 0 });
               }
             })
-        });
-      });
+            .catch((err: Error) => resolve({ symbol: trade[0], total: 0 }));
+        })
+      ));
 
       Promise.all(allDividends)
-        .then(divResult => {
+        .then((divResult) => {
+          console.log(divResult);
           let total = 0;
-          divResult.forEach(dividend => {
+          divResult.forEach((dividend) => {
             total += Number.isNaN(dividend.total) ? 0 : dividend.total;
           });
 
           res.status(200).json({ all: divResult, total });
         })
-        .catch((err: Error) => err);
+        .catch((err: Error) => { throw err; });
     })
-    .catch((err: any) => {
-      console.error(err);
+    .catch((err: Error) => {
       res.status(500).json({ message: err.message });
     });
 });
 
-securityRouter.get('/:id', async (req: Request, res: Response) => {
+securityRouter.get('/dividends/:id', async (req: Request, res: Response) => {
   const symbol = String(req.params.id);
   yahooFinance.getDividends(symbol)
-    .then(dividend => { res.status(200).json({ data: dividend }); })
-    .catch((err: any) => { res.status(500).json({ message: err.message }); });
+    .then((dividend) => { res.status(200).json({ data: dividend }); })
+    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+});
+
+securityRouter.get('/', async (req: Request, res: Response) => {
+  securityModel.findAll()
+    .then((securities: Security[]) => { res.status(200).json(securities); })
+    .catch((err: Error) => { res.status(500).json({ message: err.message }); })
+});
+
+securityRouter.get('/:id', async (req: Request, res: Response) => {
+  const symbol = String(req.params.id);
+  securityModel.findOne(symbol)
+    .then((security: Security) => { res.status(200).json(security); })
+    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 
 securityRouter.post('/', async (req: Request, res: Response) => {
@@ -90,21 +75,45 @@ securityRouter.post('/', async (req: Request, res: Response) => {
 
   securityModel.create(security)
     .then(() => { res.status(200).json(security); })
-    .catch((err: any) => { res.status(500).json({ message: err.message }); });
+    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 
 securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
-  const securities: Promise<Security>[] = req.body.map(item => {
+  const securities: Promise<Security>[] = req.body.map((item) => {
     const { symbol, isin } = item;
-    return yahooFinance.findOne(symbol, isin);
-  });
 
-  console.log(securities);
+    return new Promise((resolve, reject) => {
+      yahooFinance.findOne(symbol, isin)
+        .then((security: Security) => {
+          if (security.currency !== 'XXX') {
+            console.log(symbol, 'ok');
+            return resolve(security);
+          }
+
+          console.log(symbol, 'nok');
+          throw new Error();
+        })
+        .catch(() => {
+          const security = {
+            symbol,
+            quoteType: item.quote_type,
+            nameLong: item.name,
+            nameShort: item.name,
+            currency: item.currency,
+            isin,
+            info: {},
+            source: item.source,
+            sourceUrl: item.source_url
+          };
+          resolve(security);
+        })
+    })
+  });
 
   Promise.all(securities)
     .then((securitiesResult) => securityModel.createMultiple(securitiesResult))
     .then((message) => { res.status(200).json({ data: message }); })
-    .catch((err: any) => { res.status(500).json({ message: err }); });
+    .catch((err: Error) => { res.status(500).json({ message: err }); });
 });
 
 export { securityRouter };
