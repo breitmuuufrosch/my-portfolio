@@ -25,6 +25,9 @@ import { Dashboard } from './dashboard/Dashboard';
 import { Trades } from './dashboard/Trades';
 import { Accounts } from './dashboard/Accounts';
 import { Securities } from './dashboard/Securities';
+import { Dividends } from './dashboard/Dividends';
+import { AccountsHistory } from './dashboard/AccountHistory';
+import { SecurityHistory } from './dashboard/SecuritiesHistory';
 
 const drawerWidth = 240;
 
@@ -185,8 +188,11 @@ function Main() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/accounts" element={<Accounts />} />
+                  <Route path="/accounts/history" element={<AccountsHistory />} />
                   <Route path="/securities" element={<Securities />} />
-                  <Route path="/trades" element={<Trades selectSymbol={() => {}} />} />
+                  <Route path="/securities/history" element={<SecurityHistory />} />
+                  <Route path="/trades" element={<Trades selectSymbol={() => { }} />} />
+                  <Route path="/dividends" element={<Dividends />} />
                 </Routes>
               </Paper>
             </Grid>

@@ -5,47 +5,44 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { AccountSummary } from '@backend/types/account';
+import { Security } from '@backend/types/security';
 import { Title } from './Title';
-import { getAccountSummary } from '../types/service';
+import { getSecurities } from '../types/service';
 
 function preventDefault(event: React.MouseEvent) {
   event.preventDefault();
 }
 
-export function Accounts() {
-  const [accountSummary, setAccountSummary] = React.useState<AccountSummary[] | null>(null);
+export function Securities() {
+  const [securities, setSecurities] = React.useState<Security[] | null>(null);
 
   React.useEffect(() => {
-    getAccountSummary().then(
-      (result) => setAccountSummary(result),
+    getSecurities().then(
+      (result) => setSecurities(result),
     );
   }, []);
 
   return (
     <>
-      <Title>Trades</Title>
+      <Title>Securities</Title>
       <Table size="small">
         <TableHead>
           <TableRow>
+            <TableCell>Symbol</TableCell>
             <TableCell>Name</TableCell>
             <TableCell>Currency</TableCell>
-            <TableCell>Balance</TableCell>
-            <TableCell>Actions</TableCell>
+            <TableCell>ISIN</TableCell>
+            <TableCell>Holdings</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {accountSummary?.sort((a, b) => {
-            if (a.name === b.name) {
-              return a.currency.localeCompare(b.currency);
-            }
-            return a.name.localeCompare(b.name);
-          }).map((row) => (
+          {securities?.map((row) => (
             <TableRow key={row.id}>
-              <TableCell>{row.name}</TableCell>
+              <TableCell>{row.symbol}</TableCell>
+              <TableCell>{row.nameLong}</TableCell>
               <TableCell>{row.currency}</TableCell>
-              <TableCell>{Number(row.balance)}</TableCell>
-              <TableCell><Link href={`accounts/history?accountId=${row.id}`}>History</Link></TableCell>
+              <TableCell>{row.isin}</TableCell>
+              <TableCell>{row.holdings ? Number(row.holdings) : ''}</TableCell>
             </TableRow>
           ))}
         </TableBody>

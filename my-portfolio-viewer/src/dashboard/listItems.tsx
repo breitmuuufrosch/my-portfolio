@@ -45,6 +45,14 @@ export const mainListItems = (
         <ListItemText primary="Trades" />
       </ListItemButton>
     </Link>
+    <Link component={RouterLink} to="/dividends">
+      <ListItemButton>
+        <ListItemIcon>
+          <ShowChartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Dividends" />
+      </ListItemButton>
+    </Link>
   </>
 );
 

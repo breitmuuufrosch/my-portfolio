@@ -11,6 +11,8 @@ FROM (
 	GROUP BY sh.security_id, s_details.currency, sh.date
 	ORDER BY sh.date
 ) AS pf_value
--- WHERE pf_value.currency = 'CHF'
+WHERE
+	pf_value.currency = 'CHF'
+    AND WEEKDAY(pf_value.date) NOT IN (5, 6)
 GROUP BY pf_value.currency, pf_value.date
 ORDER BY pf_value.date

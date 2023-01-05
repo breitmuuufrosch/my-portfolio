@@ -33,6 +33,7 @@ export function Securities() {
             <TableCell>Currency</TableCell>
             <TableCell>ISIN</TableCell>
             <TableCell>Holdings</TableCell>
+            <TableCell>Action</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -43,6 +44,7 @@ export function Securities() {
               <TableCell>{row.currency}</TableCell>
               <TableCell>{row.isin}</TableCell>
               <TableCell>{row.holdings ? Number(row.holdings) : ''}</TableCell>
+              <TableCell><Link href={`securities/history?securityId=${row.id}`}>History</Link></TableCell>
             </TableRow>
           ))}
         </TableBody>

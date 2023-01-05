@@ -1,67 +1,42 @@
-SELECT *
+SELECT 
+	all_transactions.*,
+    s.symbol,
+    s.name_short
 FROM (
-	SELECT act_to.id, 'payment' AS action, act_to.to_account_id AS account_id, NULL as security_id, act_to.date, actm_to.value + actm_to.fee + actm_to.tax AS value
-	FROM account_transaction AS act_to
-	LEFT JOIN money AS actm_to ON actm_to.id = act_to.to_money_id
-    WHERE act_to.type = 'payment'
+	SELECT atd.id, atd.type, atd.to_account_id AS account_id, NULL as security_id, atd.date, atd.to_currency AS currency, atd.to_value AS total, atd.to_value AS value, atd.to_fee AS fee, atd.to_tax AS tax
+	FROM account_transaction_details AS atd
+    WHERE atd.type IN ('payment', 'interest')
     
     UNION
     
-	SELECT act_from.id, 'payout' AS action, act_from.from_account_id AS account_id, NULL as security_id, act_from.date, -1 * (actm_from.value + actm_from.fee + actm_from.tax) AS value
-	FROM account_transaction AS act_from
-	LEFT JOIN money AS actm_from ON actm_from.id = act_from.from_money_id
-    WHERE act_from.type = 'payout'
+	SELECT atd.id, atd.type, atd.from_account_id AS account_id, NULL as security_id, atd.date, atd.from_currency AS currency, -1 * (atd.from_value + atd.from_fee + atd.from_tax) AS total, atd.from_value AS value, atd.from_fee AS fee, atd.from_tax AS tax
+	FROM account_transaction_details AS atd
+    WHERE atd.type IN ('payout', 'fee')
     
 	UNION
     
-	SELECT act_to.id, 'transfer_to' AS action, act_to.to_account_id AS account_id, set_buy.security_id, act_to.date, actm_to.value + actm_to.fee + actm_to.tax AS value
-	FROM account_transaction AS act_to
-	LEFT JOIN money AS actm_to ON actm_to.id = act_to.to_money_id
-    LEFT JOIN security_transaction AS set_buy ON set_buy.account_transaction_id = act_to.id
-    WHERE act_to.type = 'transfer' AND act_to.to_account_id IS NOT NULL
+	SELECT atd.id, 'transfer_to' AS type, atd.to_account_id AS account_id, atd.security_id, atd.date, atd.to_currency AS currency, atd.to_value AS total, atd.to_value AS value, atd.to_fee AS fee, atd.to_tax AS tax
+	FROM account_transaction_details AS atd
+    WHERE atd.type = 'transfer' AND atd.to_account_id IS NOT NULL
     
     UNION
     
-	SELECT act_from.id, 'transfer_from' AS action, act_from.from_account_id AS account_id, set_buy.security_id, act_from.date, -1 * (actm_from.value + actm_from.fee + actm_from.tax) AS value
-	FROM account_transaction AS act_from
-	LEFT JOIN money AS actm_from ON actm_from.id = act_from.from_money_id
-    LEFT JOIN security_transaction AS set_buy ON set_buy.account_transaction_id = act_from.id
-    WHERE act_from.type = 'transfer' AND act_from.from_account_id IS NOT NULL
+	SELECT atd.id, 'transfer_from' AS type, atd.from_account_id AS account_id, atd.security_id, atd.date, atd.from_currency AS currency, -1 * (atd.from_value + atd.from_fee + atd.from_tax) AS total, atd.from_value AS value, atd.from_fee AS fee, atd.from_tax AS tax
+	FROM account_transaction_details AS atd
+	WHERE atd.type = 'transfer' AND atd.from_account_id IS NOT NULL
     
 	UNION
     
-	SELECT set_sell.id, 'sell' AS action, set_sell.account_id, set_sell.security_id, set_sell.date, actm_sell.value AS value
-	FROM security_transaction AS set_sell
-	LEFT JOIN money AS actm_sell ON actm_sell.id = set_sell.money_id
-    WHERE set_sell.type = 'sell'
+	SELECT std.id, std.type, std.account_id, std.security_id, std.date, std.currency, std.value - std.fee - std.tax AS total, std.value AS value, std.fee AS fee, std.tax AS tax
+	FROM security_transaction_details AS std
+	WHERE std.type IN ('sell', 'dividend')
     
     UNION
     
-	SELECT set_buy.id, 'buy' AS action, set_buy.account_id, set_buy.security_id, set_buy.date, -1 * (actm_buy.value + actm_buy.fee + actm_buy.tax) AS value
-	FROM security_transaction AS set_buy
-	LEFT JOIN money AS actm_buy ON actm_buy.id = set_buy.money_id
-    WHERE set_buy.type = 'buy'
-    
-	UNION
-    
-	SELECT set_div.id, 'dividend' AS action, set_div.account_id, set_div.security_id, set_div.date, actm_div.value AS value
-	FROM security_transaction AS set_div
-	LEFT JOIN money AS actm_div ON actm_div.id = set_div.money_id
-	WHERE set_div.type = 'dividend'
-    
-	UNION
-    
-	SELECT act.id, 'interest' AS action, act.to_account_id, NULL AS security_id, act.date, actm.value AS value
-	FROM account_transaction AS act
-	LEFT JOIN money AS actm ON actm.id = act.to_money_id
-	WHERE act.type = 'interest'
-    
-	UNION
-    
-	SELECT act.id, 'fee' AS action, act.from_account_id, NULL AS security_id, act.date, -actm.value AS value
-	FROM account_transaction AS act
-	LEFT JOIN money AS actm ON actm.id = act.from_money_id
-	WHERE act.type = 'fee'
+	SELECT std.id, std.type, std.account_id, std.security_id, std.date, std.currency, -1 * (std.value + std.fee + std.tax) AS total, std.value AS value, std.fee AS fee, std.tax AS tax
+	FROM security_transaction_details AS std
+    WHERE std.type IN ('buy')
 ) AS all_transactions
-where account_id = 8
-order by date asc
+LEFT JOIN security AS s ON s.id = all_transactions.security_id
+WHERE account_id = 4
+ORDER BY date, FIELD(type, 'payment', 'transfer_to', 'dividend',  'sell', 'payout', 'transfer_from', 'buy')

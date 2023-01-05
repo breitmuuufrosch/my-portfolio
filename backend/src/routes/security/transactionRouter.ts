@@ -5,6 +5,26 @@ import { Security, SecurityTransaction } from '../../types/security';
 
 const transactionRouter = express.Router();
 
+transactionRouter.get('/', async (req: Request, res: Response) => {
+  transactionModel.findAll()
+    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
+    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+});
+
+transactionRouter.get('/type/:type', async (req: Request, res: Response) => {
+  const { type } = req.params;
+  transactionModel.findByType(type)
+    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
+    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+});
+
+transactionRouter.get('/security/:securityId', async (req: Request, res: Response) => {
+  const { securityId } = req.params;
+  transactionModel.findBySecurityId(Number(securityId))
+    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
+    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+});
+
 transactionRouter.post('/', async (req: Request, res: Response) => {
   const transaction = req.body as SecurityTransaction;
 

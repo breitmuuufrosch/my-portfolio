@@ -2,13 +2,24 @@ import express, { Request, Response } from 'express';
 import * as accountModel from '../models/account';
 import * as securityModel from '../models/security';
 import * as transactionModel from '../models/transaction';
-import { AccountSummary } from '../types/account';
+import { AccountHistory, AccountSummary } from '../types/account';
 import { AccountTransaction } from '../types/security';
 
 const accountRouter = express.Router();
 
-accountRouter.get('/', async (req: Request, res: Response) => {
-  accountModel.findAll()
+accountRouter.get('/history/:accountId', async (req: Request, res: Response) => {
+  const { accountId } = req.params;
+  accountModel.find(Number(accountId))
+    .then((trades: AccountHistory[]) => {
+      res.status(200).json(trades);
+    })
+    .catch((err: Error) => {
+      res.status(500).json({ message: err.message });
+    });
+});
+
+accountRouter.get('/summary', async (req: Request, res: Response) => {
+  accountModel.getSummary()
     .then((trades: AccountSummary[]) => {
       res.status(200).json(trades);
     })
