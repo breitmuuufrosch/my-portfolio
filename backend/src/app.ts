@@ -7,6 +7,7 @@ import { accountRouter } from './routes/accountRouter';
 import { currencyRouter } from './routes/currencyRouter';
 import { securityRouter } from './routes/securityRouter';
 import { tradeRouter } from './routes/tradeRouter';
+import { historyRouter } from './routes/historyRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
@@ -69,6 +70,7 @@ app.use('/accounts', accountRouter);
 app.use('/currencies', currencyRouter);
 app.use('/securities', securityRouter);
 app.use('/trades', tradeRouter);
+app.use('/histories', historyRouter);
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console

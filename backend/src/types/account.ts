@@ -1,3 +1,10 @@
+export interface Account {
+  id: number,
+  name: string,
+  currency: string,
+  depotId: number,
+}
+
 export interface AccountSummary {
   id: number,
   name: string,

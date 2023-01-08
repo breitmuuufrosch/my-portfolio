@@ -26,8 +26,8 @@ import { Trades } from './dashboard/Trades';
 import { Accounts } from './dashboard/Accounts';
 import { Securities } from './dashboard/Securities';
 import { Dividends } from './dashboard/Dividends';
-import { AccountsHistory } from './dashboard/AccountHistory';
-import { SecurityHistory } from './dashboard/SecuritiesHistory';
+import { AccountsHistory } from './dashboard/AccountsHistory';
+import { SecurityHistoryView } from './dashboard/SecuritiesHistory';
 
 const drawerWidth = 240;
 
@@ -190,7 +190,7 @@ function Main() {
                   <Route path="/accounts" element={<Accounts />} />
                   <Route path="/accounts/history" element={<AccountsHistory />} />
                   <Route path="/securities" element={<Securities />} />
-                  <Route path="/securities/history" element={<SecurityHistory />} />
+                  <Route path="/securities/history" element={<SecurityHistoryView />} />
                   <Route path="/trades" element={<Trades selectSymbol={() => { }} />} />
                   <Route path="/dividends" element={<Dividends />} />
                 </Routes>

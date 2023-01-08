@@ -8,7 +8,8 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { SecurityTransaction } from '@backend/types/security';
 import { Title } from './Title';
-import { getSecurityTransactionDetails } from '../types/service';
+import { getAccountHistoryByType } from '../types/service';
+import { rounding } from '../data/formatting';
 
 function range(low: number, high: number) {
   const values = [];
@@ -17,8 +18,6 @@ function range(low: number, high: number) {
   }
   return values;
 }
-
-const rounding = (value?: number) => (value ? Math.round(value * 1000) / 1000 : 0);
 
 interface DividendSummary {
   date: string,
@@ -43,13 +42,16 @@ const data = [
   { queries: ['dividend'], property: 'value', text: 'dividend' },
   { queries: ['interest'], property: 'value', text: 'interest' },
   { queries: ['dividend', 'interest'], property: 'value', text: 'income' },
+  { queries: ['payment'], property: 'total', text: 'payments' },
+  { queries: ['payout'], property: 'total', text: 'payout' },
+  { queries: ['buy'], property: 'total', text: 'invested' },
   { queries: [''], property: 'fee', text: 'fee' },
   { queries: [''], property: 'tax', text: 'tax' },
 ];
 
 export function Dividends() {
   const [types, setTypes] = React.useState<string[]>(['dividend']);
-  const [prop, setProp] = React.useState<string>('total');
+  const [prop, setProp] = React.useState<string>('value');
   const [transactions, setTransactions] = React.useState<DividendSummary[] | null>(null);
   const [dateRange, setDateRange] = React.useState<number[]>(null);
 
@@ -63,7 +65,8 @@ export function Dividends() {
   };
 
   React.useEffect(() => {
-    const promises = types.map((type) => getSecurityTransactionDetails(type));
+    const promises = types.map((type) => getAccountHistoryByType(type));
+    console.log('update it', types, promises);
 
     Promise.all(promises)
       .then((results) => {
@@ -76,7 +79,7 @@ export function Dividends() {
       <TableCell>{year}</TableCell>
       {
         range(0, 11).map((month) => (
-          <TableCell key={`${currency}-${year}-${month}`}>
+          <TableCell key={`${currency}-${year}-${month}`} align="right">
             {
               rounding(
                 transactions.find((i) => i.date === `${year}-${month}`)?.dividends
@@ -87,7 +90,7 @@ export function Dividends() {
           </TableCell>
         ))
       }
-      <TableCell>
+      <TableCell align="right">
         {
           rounding(
             transactions.filter((i) => i.date.startsWith(String(year)))
@@ -102,16 +105,16 @@ export function Dividends() {
   const renderCurrency = (currency: string) => (
     <>
       <h3>{currency}</h3>
-      <Table size="small">
+      <Table size="small" style={{ tableLayout: 'fixed' }}>
         <TableHead>
           <TableRow>
             <TableCell>Year</TableCell>
             {range(0, 11).map((month) => (
-              <TableCell key={month}>
+              <TableCell key={month} align="right">
                 {new Date(2000, month).toLocaleString('default', { month: 'short' })}
               </TableCell>
             ))}
-            <TableCell>Tot</TableCell>
+            <TableCell align="right">Tot</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

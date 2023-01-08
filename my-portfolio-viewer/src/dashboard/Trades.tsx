@@ -9,23 +9,11 @@ import { TableFooter } from '@mui/material';
 import { Trade } from '@backend/types/trade';
 import { Title } from './Title';
 import { getTrades } from '../types/service';
+import { rounding } from '../data/formatting';
 
 function preventDefault(event: React.MouseEvent) {
   event.preventDefault();
 }
-
-const rounding = (value?: number) => Math.round(value * 1000) / 1000;
-
-// const TradesNew = ({selectSymbol: undefined}) => (
-//   <>
-//     <div>yeah</div>
-//   </>
-// );
-// function TradesNew2 = ({selectSymbol: undefined}) => (
-//   <>
-//     <div>yeah</div>
-//   </>
-// );
 
 interface TradesProps {
   selectSymbol?: (symbol: string) => void,
@@ -101,7 +89,7 @@ function Trades({ selectSymbol }: TradesProps) {
                   {
                     trades
                       ? rounding(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + Number(row.entryPrice), 0))
+                        .reduce((accumulator, row) => accumulator + row.entryPrice, 0))
                       : ''
                   }
                 </TableCell>
@@ -109,7 +97,7 @@ function Trades({ selectSymbol }: TradesProps) {
                   {
                     trades
                       ? rounding(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + Number(row.entryPriceAll), 0))
+                        .reduce((accumulator, row) => accumulator + row.entryPriceAll, 0))
                       : ''
                   }
                 </TableCell>
@@ -117,7 +105,7 @@ function Trades({ selectSymbol }: TradesProps) {
                   {
                     trades
                       ? rounding(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + Number(row.exitPrice), 0))
+                        .reduce((accumulator, row) => accumulator + row.exitPrice, 0))
                       : ''
                   }
                 </TableCell>
@@ -126,7 +114,7 @@ function Trades({ selectSymbol }: TradesProps) {
                   {
                     trades
                       ? rounding(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + Number(row.exitPrice - row.entryPriceAll), 0))
+                        .reduce((accumulator, row) => accumulator + row.exitPrice - row.entryPriceAll, 0))
                       : ''
                   }
                 </TableCell>

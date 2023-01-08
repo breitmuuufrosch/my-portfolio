@@ -29,11 +29,11 @@ export const findAll = (): Promise<Trade[]> => {
           symbol: row.symbol,
           currency: row.currency,
           quoteType: row.quote_type,
-          entryPrice: row.entry_price,
-          entryPriceAll: row.entry_price_all,
-          number: row.number,
-          lastPrice: row.last_price,
-          exitPrice: row.exit_price,
+          entryPrice: Number(row.entry_price),
+          entryPriceAll: Number(row.entry_price_all),
+          number: Number(row.number),
+          lastPrice: Number(row.last_price),
+          exitPrice: Number(row.exit_price),
         }));
         resolve(trades);
       },

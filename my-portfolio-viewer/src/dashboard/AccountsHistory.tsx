@@ -48,8 +48,8 @@ export function AccountsHistory() {
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Date</TableCell>
+            <TableCell>Event</TableCell>
+            <TableCell>Action</TableCell>
             <TableCell>Security</TableCell>
             <TableCell align="right">Value</TableCell>
             <TableCell align="right">Cumulative Sum</TableCell>
@@ -57,9 +57,9 @@ export function AccountsHistory() {
         </TableHead>
         <TableBody>
           {accountSummary?.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell>{row.type}</TableCell>
+            <TableRow key={`${row.id}-${row.type}`}>
               <TableCell>{row.date.toLocaleDateString('de-CH')}</TableCell>
+              <TableCell>{row.type}</TableCell>
               <TableCell>{row.nameShort}</TableCell>
               <TableCell align="right">{`${rounding(Number(row.total))} ${row.currency}`}</TableCell>
               <TableCell align="right">{rounding(row.cumsum, 2)}</TableCell>

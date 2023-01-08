@@ -16,13 +16,13 @@ WITH dates AS (
 	) gen_dates
 ),
 security_values AS (
-	SELECT sh.security_id, s_details.currency, sh.date, SUM(security_summary.amount) AS amount, SUM(security_summary.amount) * sh.close AS value
-	FROM security_history AS sh
-	LEFT JOIN security AS s_details ON s_details.id = sh.security_id
-	INNER JOIN security_transaction_summary AS security_summary ON security_summary.security_id = sh.security_id AND security_summary.date <= sh.date
-	-- WHERE sh.security_id IN (120)
-	GROUP BY sh.security_id, s_details.currency, sh.date
-	-- ORDER BY sh.date
+	SELECT sph.security_id, s_details.currency, sph.date, SUM(security_summary.amount) AS amount, SUM(security_summary.amount) * sph.close AS value
+	FROM security_price_history AS sph
+	LEFT JOIN security AS s_details ON s_details.id = sph.security_id
+	INNER JOIN security_transaction_summary AS security_summary ON security_summary.security_id = sph.security_id AND security_summary.date <= sph.date
+	-- WHERE sph.security_id IN (120)
+	GROUP BY sph.security_id, s_details.currency, sph.date
+	-- ORDER BY sph.date
 )
 SELECT dates.gen_date AS date, security_values.currency, security_values.amount, security_values.value
 FROM dates

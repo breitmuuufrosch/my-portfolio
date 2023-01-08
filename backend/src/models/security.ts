@@ -1,8 +1,7 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { PorftolioQuote, Security, SecurityQuote, SecurityTransaction } from '../types/security';
-import { Trade } from '../types/trade';
+import { PorftolioQuote, Security, SecurityQuote } from '../types/security';
 
 export const findOne = (symbol: string): Promise<Security> => {
   const queryString = sql(`
@@ -45,10 +44,10 @@ export const findOne = (symbol: string): Promise<Security> => {
             sourceUrl: row.source_url,
           };
           resolve(security);
-        } catch (err: any) {
-          reject(`${symbol}: ${err}`);
+        } catch (error: unknown) {
+          reject(new Error(`${symbol}: ${error}`));
         }
-      }
+      },
     );
   });
 };
@@ -94,16 +93,43 @@ export const findAll = (): Promise<Security[]> => {
           holdings: row.number,
         }));
         resolve(security);
-      }
+      },
     );
   });
 };
 
 export const create = (security: Security): Promise<number> => {
   const queryString = sql(`
-    INSERT INTO security (symbol, currency, quote_type, isin, valor, name_short, name_long, info, source, source_url)
-    VALUES (:symbol, :currency, :quoteType, :isin, :valor, :nameShort, :nameLong, :info, :source, :source_url)
-    ON DUPLICATE KEY UPDATE isin=:isin, valor=:valor, info=:info, source=:source, source_url=:source_url
+    INSERT INTO security (
+      symbol,
+      currency,
+      quote_type,
+      isin,
+      valor,
+      name_short,
+      name_long,
+      info,
+      source,
+      source_url
+    )
+    VALUES (
+      :symbol,
+      :currency,
+      :quoteType,
+      :isin,
+      :valor,
+      :nameShort,
+      :nameLong,
+      :info,
+      :source,
+      :source_url
+    )
+    ON DUPLICATE KEY UPDATE
+      isin=:isin,
+      valor=:valor,
+      info=:info,
+      source=:source,
+      source_url=:source_url
   `);
 
   return new Promise((resolve, reject) => {
@@ -121,9 +147,27 @@ export const create = (security: Security): Promise<number> => {
 
 export const createMultiple = (securities: Security[]): Promise<string> => {
   const queryString = `
-    INSERT INTO security (symbol, currency, quote_type, isin, valor, name_short, name_long, info, source, source_url)
+    INSERT INTO security (
+      symbol,
+      currency,
+      quote_type,
+      isin,
+      valor,
+      name_short,
+      name_long,
+      info,
+      source,
+      source_url
+    )
     VALUES ?
-    ON DUPLICATE KEY UPDATE isin=VALUES(isin), valor=VALUES(valor), name_short=VALUES(name_short), name_long=VALUES(name_long), info=VALUES(info), source=VALUES(source), source_url=VALUES(source_url)
+    ON DUPLICATE KEY UPDATE
+      isin=VALUES(isin),
+      valor=VALUES(valor),
+      name_short=VALUES(name_short),
+      name_long=VALUES(name_long),
+      info=VALUES(info),
+      source=VALUES(source),
+      source_url=VALUES(source_url)
   `;
 
   return new Promise((resolve, reject) => {
@@ -154,7 +198,16 @@ export const createMultiple = (securities: Security[]): Promise<string> => {
 
 export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
   const queryString = `
-    INSERT INTO security_history (security_id, date, high, low, open, close, adjclose, volume)
+    INSERT INTO security_price_history (
+      security_id,
+      date,
+      high,
+      low,
+      open,
+      close,
+      adjclose,
+      volume
+    )
     VALUES ?
     ON DUPLICATE KEY UPDATE
       high=VALUES(high),
@@ -164,6 +217,8 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
       adjclose=VALUES(adjclose),
       volume=VALUES(volume)
   `;
+
+  // console.log(queryString);
 
   return new Promise((resolve, reject) => {
     db.query(
@@ -192,20 +247,20 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
 export const getHistory = (security_id: number): Promise<SecurityQuote[]> => {
   const queryString = sql(`
     SELECT
-      sh.security_id,
-      sh.date,
-      sh.high,
-      sh.low,
-      sh.open,
-      sh.close,
-      sh.adjclose,
-      sh.volume
-    FROM security_history as sh
+      sph.security_id,
+      sph.date,
+      sph.high,
+      sph.low,
+      sph.open,
+      sph.close,
+      sph.adjclose,
+      sph.volume
+    FROM security_price_history as sph
     WHERE
-      sh.security_id = :security_id
-      AND sh.date > '2022-01-01'
+    sph.security_id = :security_id
+      AND sph.date > '2022-01-01'
     ORDER BY
-      sh.date
+      sph.date
   `);
 
   return new Promise((resolve, reject) => {
@@ -229,24 +284,40 @@ export const getHistory = (security_id: number): Promise<SecurityQuote[]> => {
         resolve(securityQuotes);
       },
     );
-  })
-}
+  });
+};
 
 export const getPortfolioHistory = (currency: string): Promise<PorftolioQuote[]> => {
   const queryString = sql(`
-    SELECT pf_value.currency, pf_value.date, SUM(pf_value.value) AS value
+    SELECT
+      pf_value.currency,
+      pf_value.date,
+      SUM(pf_value.value) AS value
     FROM (
-      SELECT sh.security_id, s_details.currency, sh.date, SUM(security_summary.amount) AS amount, SUM(security_summary.amount) * sh.close AS value
-      FROM security_history AS sh
-      LEFT JOIN security AS s_details ON s_details.id = sh.security_id
-      INNER JOIN security_transaction_summary AS security_summary ON security_summary.security_id = sh.security_id AND security_summary.date <= sh.date
-      -- WHERE sh.security_id IN (1, 10)
-      GROUP BY sh.security_id, s_details.currency, sh.date
-      ORDER BY sh.date
+      SELECT
+        sph.security_id,
+        s_details.currency,
+        sph.date,
+        SUM(security_summary.amount) AS amount,
+        SUM(security_summary.amount) * sph.close AS value
+      FROM security_price_history AS sph
+      LEFT JOIN security AS s_details ON s_details.id = sph.security_id
+      INNER JOIN security_history AS security_summary ON
+        security_summary.security_id = sph.security_id
+        AND security_summary.date <= sph.date
+        AND security_summary.type IN ('buy', 'sell', 'posting')
+      -- WHERE sph.security_id IN (1, 10)
+      GROUP BY
+        sph.security_id,
+        s_details.currency,
+        sph.date
+      ORDER BY sph.date
     ) AS pf_value
     WHERE pf_value.currency = :currency
       AND WEEKDAY(pf_value.date) NOT IN (5, 6)
-    GROUP BY pf_value.currency, pf_value.date
+    GROUP BY
+      pf_value.currency,
+      pf_value.date
     ORDER BY pf_value.date
   `);
 
@@ -258,13 +329,12 @@ export const getPortfolioHistory = (currency: string): Promise<PorftolioQuote[]>
 
         const rows = <RowDataPacket[]>result;
         const securityQuotes: PorftolioQuote[] = rows.map((row) => ({
-          date: row.date,
-          value: row.value,
+          date: new Date(row.date),
+          value: Number(row.value),
           currency: row.currency,
         }));
-        console.log(securityQuotes);
         resolve(securityQuotes);
       },
     );
-  })
-} 
+  });
+};

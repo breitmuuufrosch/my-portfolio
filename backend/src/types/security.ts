@@ -13,6 +13,23 @@ export interface Security {
   sourceUrl?: string,
 }
 
+export interface SecurityHistory {
+  id: number,
+  type: string,
+  accountId: number,
+  securityId: number,
+  symbol: string,
+  nameShort: string,
+  date: Date,
+  price: number,
+  amount: number,
+  currency: string,
+  total: number,
+  value: number,
+  fee: number,
+  tax: number,
+}
+
 export interface SecurityQuote {
   security_id: number,
   date: Date,

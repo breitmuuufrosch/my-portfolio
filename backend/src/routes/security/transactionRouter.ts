@@ -5,26 +5,6 @@ import { Security, SecurityTransaction } from '../../types/security';
 
 const transactionRouter = express.Router();
 
-transactionRouter.get('/', async (req: Request, res: Response) => {
-  transactionModel.findAll()
-    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
-});
-
-transactionRouter.get('/type/:type', async (req: Request, res: Response) => {
-  const { type } = req.params;
-  transactionModel.findByType(type)
-    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
-});
-
-transactionRouter.get('/security/:securityId', async (req: Request, res: Response) => {
-  const { securityId } = req.params;
-  transactionModel.findBySecurityId(Number(securityId))
-    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
-});
-
 transactionRouter.post('/', async (req: Request, res: Response) => {
   const transaction = req.body as SecurityTransaction;
 
@@ -48,17 +28,11 @@ transactionRouter.post('/multiple', async (req: Request, res: Response) => {
               resolve('duplicate');
               return;
             }
-            
-            if (item.hasOwnProperty('exchange_from_currency')) {
-              transactionModel.createTransactionForeign(updatedSecurity)
-                .then(resolve)
-                .catch(reject);
-            } else {
-              transactionModel.createTransaction(updatedSecurity)
-                .then(resolve)
-                .catch(reject);
-            }
-          })
+
+            transactionModel.createTransaction(updatedSecurity)
+              .then(resolve)
+              .catch(reject);
+          });
       })
       .catch((err: Error) => { reject(err); });
   })))

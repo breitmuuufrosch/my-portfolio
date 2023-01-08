@@ -1,5 +1,4 @@
 import yahooFinance from 'yahoo-finance2';
-import { HistoricalHistoryResult } from 'yahoo-finance2/dist/esm/src/modules/historical';
 import { Security, SecurityQuote } from '../types/security';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
@@ -50,9 +49,9 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
 //     }
 // }
 
-export const getDividends = async (symbol: string): Promise<any> => {
-  return new Promise((resolve, reject) => {
-    yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] })
+// eslint-disable-next-line
+export const getDividends = async (symbol: string): Promise<any> => new Promise((resolve, reject) => {
+  yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] })
     .then((order) => {
       const dividend = {
         symbol,
@@ -66,13 +65,10 @@ export const getDividends = async (symbol: string): Promise<any> => {
       resolve(dividend);
     })
     .catch(reject);
-  });
-};
+});
 
-export const getHistory = async (symbol: string): Promise<SecurityQuote[]> => {
-  return new Promise((resolve, reject) => {
-    yahooFinance.historical(symbol, { period1: '2000-01-01' })
-      .then((quotes) => resolve(quotes.map((item) => item as SecurityQuote)))
-      .catch(() => resolve([]));
-  });
-};
+export const getHistory = async (symbol: string): Promise<SecurityQuote[]> => new Promise((resolve) => {
+  yahooFinance.historical(symbol, { period1: '2000-01-01' })
+    .then((quotes) => resolve(quotes.map((item) => item as SecurityQuote)))
+    .catch(() => resolve([]));
+});
