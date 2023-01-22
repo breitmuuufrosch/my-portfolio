@@ -5,7 +5,8 @@ export interface Trade {
   currency: string,
   entryPrice: number,
   entryPriceAll: number,
-  number: number,
+  amount: number,
   exitPrice: number,
   lastPrice: number,
+  lastDate: Date,
 }

@@ -44,7 +44,7 @@ export function Securities() {
               <TableCell>{row.currency}</TableCell>
               <TableCell>{row.isin}</TableCell>
               <TableCell>{row.holdings ? Number(row.holdings) : ''}</TableCell>
-              <TableCell><Link href={`securities/history?securityId=${row.id}`}>History</Link></TableCell>
+              <TableCell><Link href={`securities/history?securityId=${row.symbol}`}>History</Link></TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -38,5 +38,5 @@ FROM (
     WHERE std.type IN ('buy')
 ) AS all_transactions
 LEFT JOIN security AS s ON s.id = all_transactions.security_id
--- WHERE account_id = 4
+WHERE all_transactions.id = 20
 ORDER BY date, FIELD(type, 'payment', 'transfer_to', 'dividend',  'sell', 'payout', 'transfer_from', 'buy')

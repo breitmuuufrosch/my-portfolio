@@ -66,7 +66,7 @@ export const findAll = (): Promise<Security[]> => {
       s.info,
       s.source,
       s.source_url,
-      t.number
+      t.amount
     FROM security AS s
     LEFT JOIN trade AS t ON t.id = s.id
   `;
@@ -244,7 +244,10 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
   });
 };
 
-export const getHistory = (security_id: number): Promise<SecurityQuote[]> => {
+export const getHistory = (securityId: number, startDate?: Date, endDate?: Date): Promise<SecurityQuote[]> => {
+  startDate = startDate ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+  endDate = endDate ?? new Date();
+
   const queryString = sql(`
     SELECT
       sph.security_id,
@@ -257,15 +260,15 @@ export const getHistory = (security_id: number): Promise<SecurityQuote[]> => {
       sph.volume
     FROM security_price_history as sph
     WHERE
-    sph.security_id = :security_id
-      AND sph.date > '2022-01-01'
+      sph.security_id = :securityId
+      AND sph.date BETWEEN :startDate AND :endDate
     ORDER BY
       sph.date
   `);
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString({ security_id }),
+      queryString({ securityId, startDate, endDate }),
       (err, result) => {
         if (err) { reject(err); return; }
 

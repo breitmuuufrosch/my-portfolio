@@ -2,6 +2,7 @@ import { RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
 import { AccountHistory, AccountSummary } from '../types/account';
+import { AccountTransaction } from '../types/security';
 
 const rowToAccountHistory = (row: RowDataPacket): AccountHistory => ({
   id: row.id,
@@ -18,12 +19,48 @@ const rowToAccountHistory = (row: RowDataPacket): AccountHistory => ({
   tax: Number(row.tax),
 });
 
+const rowToAccountTransaction = (row: RowDataPacket): AccountTransaction => ({
+  date: row.date,
+  type: row.type,
+  from_account_id: row.from_account_id,
+  from_currency: row.from_currency,
+  from_value: Number(row.from_value),
+  from_fee: Number(row.from_fee),
+  from_tax: Number(row.from_tax),
+  to_account_id: row.to_account_id,
+  to_currency: row.to_currency,
+  to_value: Number(row.to_value),
+  to_fee: Number(row.to_fee),
+  to_tax: Number(row.to_tax),
+});
+
 export interface AccountHistoryParams {
   accountId?: number,
   type?: string,
 }
 
-export const find = (params: AccountHistoryParams): Promise<AccountHistory[]> => {
+export const findOne = (id: number): Promise<AccountTransaction> => {
+  let queryString = `
+    SELECT *
+    FROM account_transaction_detailed AS atd
+    WHERE atd.id = :id
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      sql(queryString)({ id }),
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const row = (<RowDataPacket>result)[0];
+        resolve(rowToAccountTransaction(row));
+      },
+    );
+  });
+};
+
+
+export const findAll = (params: AccountHistoryParams): Promise<AccountHistory[]> => {
   let queryString = `
     SELECT *
     FROM account_history AS ah
@@ -79,7 +116,7 @@ export const getSummary = (): Promise<AccountSummary[]> => {
           id: row.id,
           name: row.name,
           currency: row.currency,
-          balance: row.balance,
+          balance: Number(row.balance),
         }));
         resolve(accountSummary);
       },

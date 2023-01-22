@@ -17,6 +17,7 @@ export interface SecurityHistory {
   id: number,
   type: string,
   accountId: number,
+  accountTransactionId: number,
   securityId: number,
   symbol: string,
   nameShort: string,
@@ -96,3 +97,11 @@ export interface AccountTransaction {
   to_fee: number,
   to_tax: number,
 }
+
+export const transactionTotal = (transaction: SecurityHistory) => {
+  if (['buy', 'posting'].includes(transaction.type)) {
+    return transaction.value + transaction.fee + transaction.tax;
+  }
+
+  return transaction.value - transaction.fee - transaction.tax;
+};

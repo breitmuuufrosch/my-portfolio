@@ -14,7 +14,7 @@ accountRouter.get('/', async (req: Request, res: Response) => {
 
 accountRouter.get('/:accountId/histories', async (req: Request, res: Response) => {
   const { accountId } = req.params;
-  const requestPromise = accountHistoryModel.find({ accountId: Number(accountId) });
+  const requestPromise = accountHistoryModel.findAll({ accountId: Number(accountId) });
   handleRequest<AccountHistory[]>(res, requestPromise);
 });
 

@@ -191,7 +191,7 @@ function Main() {
                   <Route path="/accounts/history" element={<AccountsHistory />} />
                   <Route path="/securities" element={<Securities />} />
                   <Route path="/securities/history" element={<SecurityHistoryView />} />
-                  <Route path="/trades" element={<Trades selectSymbol={() => { }} />} />
+                  <Route path="/trades" element={<Trades />} />
                   <Route path="/dividends" element={<Dividends />} />
                 </Routes>
               </Paper>

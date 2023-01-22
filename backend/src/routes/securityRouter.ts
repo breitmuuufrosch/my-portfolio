@@ -15,7 +15,7 @@ securityRouter.get('/dividends', async (req: Request, res: Response) => {
   type TradeInfo = [string, number];
 
   tradeModel.findAll()
-    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.number]))
+    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount]))
     .then((securities: TradeInfo[]) => {
       const allDividends = securities.map((trade: TradeInfo) => (
         new Promise<{ symbol: string, total: number }>((resolve) => {
@@ -67,19 +67,25 @@ securityRouter.get('/:symbol', async (req: Request, res: Response) => {
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 
-securityRouter.get('/:securityId/histories', async (req: Request, res: Response) => {
-  const { securityId } = req.params;
-  securityHistoryModel.findAll({ securityId: Number(securityId) })
-    .then((currencies: SecurityHistory[]) => { res.status(200).json(currencies); })
+securityRouter.get('/:symbol/histories', async (req: Request, res: Response) => {
+  const { symbol } = req.params;
+
+  securityModel.findOne(symbol)
+    .then((security: Security) => {
+      securityHistoryModel.findAll({ securityId: security.id })
+        .then((currencies: SecurityHistory[]) => { res.status(200).json(currencies); });
+    })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
 });
 
 securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
   const symbol = String(req.params.symbol);
+  const startDate = new Date(String(req.query.start));
+  const endDate = new Date(String(req.query.end));
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityModel.getHistory(security.id)
+      securityModel.getHistory(security.id, startDate, endDate)
         .then((securityQuotes: SecurityQuote[]) => res.status(200).json(securityQuotes));
     })
     .catch((err: Error) => {

@@ -11,8 +11,9 @@ export const findAll = (): Promise<Trade[]> => {
     currency,
     entry_price,
     entry_price_all,
-    number,
+    amount,
     last_price,
+    last_date,
     exit_price
   FROM trade
   `;
@@ -31,8 +32,9 @@ export const findAll = (): Promise<Trade[]> => {
           quoteType: row.quote_type,
           entryPrice: Number(row.entry_price),
           entryPriceAll: Number(row.entry_price_all),
-          number: Number(row.number),
+          amount: Number(row.amount),
           lastPrice: Number(row.last_price),
+          lastDate: row.last_date,
           exitPrice: Number(row.exit_price),
         }));
         resolve(trades);

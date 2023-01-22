@@ -96,7 +96,7 @@ export const doesExistAccountTransaction = (accountTransaction: AccountTransacti
       AND atd.from_account_id ${getComparison('from_account_id')}
       AND atd.to_account_id ${getComparison('to_account_id')}
       AND atd.from_value ${getComparison('from_value')}
-      AND act.to_value ${getComparison('to_value')}
+      AND atd.to_value ${getComparison('to_value')}
   `;
 
   return new Promise((resolve, reject) => {
