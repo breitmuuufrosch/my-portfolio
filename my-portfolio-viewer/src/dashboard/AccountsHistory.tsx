@@ -9,7 +9,7 @@ import { useSearchParams } from 'react-router-dom';
 import { AccountHistory } from '@backend/types/account';
 import { Title } from './Title';
 import { getAccountHistory } from '../types/service';
-import { rounding } from '../data/formatting';
+import { formatNumber } from '../data/formatting';
 
 function preventDefault(event: React.MouseEvent) {
   event.preventDefault();
@@ -61,8 +61,8 @@ export function AccountsHistory() {
               <TableCell>{row.date.toLocaleDateString('de-CH')}</TableCell>
               <TableCell>{row.type}</TableCell>
               <TableCell>{row.nameShort}</TableCell>
-              <TableCell align="right">{`${rounding(Number(row.total))} ${row.currency}`}</TableCell>
-              <TableCell align="right">{rounding(row.cumsum, 2)}</TableCell>
+              <TableCell align="right">{`${formatNumber(Number(row.total))} ${row.currency}`}</TableCell>
+              <TableCell align="right">{formatNumber(row.cumsum, 2)}</TableCell>
             </TableRow>
           ))}
         </TableBody>

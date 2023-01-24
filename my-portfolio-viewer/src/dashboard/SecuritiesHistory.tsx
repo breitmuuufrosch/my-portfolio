@@ -12,7 +12,7 @@ import { Title } from './Title';
 import {
   getSecurityTransactionDetailsS,
 } from '../types/service';
-import { rounding } from '../data/formatting';
+import { formatNumber } from '../data/formatting';
 import { SecurityTransactionDialog } from '../dialogs/SecurityTransaction';
 
 function preventDefault(event: React.MouseEvent) {
@@ -74,12 +74,12 @@ export function SecurityHistoryView() {
             <TableRow key={`${row.id}-${row.type}`}>
               <TableCell>{row.date.toLocaleDateString('de-CH')}</TableCell>
               <TableCell>{row.type}</TableCell>
-              <TableCell align="right">{rounding(row.total)}</TableCell>
-              <TableCell align="right">{rounding(row.value)}</TableCell>
-              <TableCell align="right">{rounding(row.fee)}</TableCell>
-              <TableCell align="right">{rounding(row.tax)}</TableCell>
-              <TableCell align="right">{rounding(row.amount, 4)}</TableCell>
-              <TableCell align="right">{rounding(row.amountCum, 4)}</TableCell>
+              <TableCell align="right">{formatNumber(row.total)}</TableCell>
+              <TableCell align="right">{formatNumber(row.value)}</TableCell>
+              <TableCell align="right">{formatNumber(row.fee)}</TableCell>
+              <TableCell align="right">{formatNumber(row.tax)}</TableCell>
+              <TableCell align="right">{formatNumber(row.amount, 4)}</TableCell>
+              <TableCell align="right">{formatNumber(row.amountCum, 4)}</TableCell>
               <TableCell>
                 <Button color="primary" href="#" onClick={() => { handleOpen(); setSelectedTransactionId(row.id); }}>
                   Edit

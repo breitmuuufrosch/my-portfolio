@@ -9,6 +9,6 @@ const historyRouter = express.Router();
 historyRouter.use('/prices', priceHistoryRouter);
 historyRouter.use('/accounts', accountHistoryRouter);
 historyRouter.use('/securities', securityHistoryRouter);
-historyRouter.use('/portfolio', portfolioHistoryRouter);
+historyRouter.use('/portfolios', portfolioHistoryRouter);
 
 export { historyRouter };

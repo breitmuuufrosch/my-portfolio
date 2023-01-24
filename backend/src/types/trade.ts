@@ -9,4 +9,6 @@ export interface Trade {
   exitPrice: number,
   lastPrice: number,
   lastDate: Date,
+  profitLoss: number,
+  profitLossPercentage: number,
 }

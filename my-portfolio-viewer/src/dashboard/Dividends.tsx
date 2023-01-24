@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import { SecurityTransaction } from '@backend/types/security';
 import { Title } from './Title';
 import { getAccountHistoryByType } from '../types/service';
-import { rounding } from '../data/formatting';
+import { formatNumber } from '../data/formatting';
 
 function range(low: number, high: number) {
   const values = [];
@@ -81,7 +81,7 @@ export function Dividends() {
         range(0, 11).map((month) => (
           <TableCell key={`${currency}-${year}-${month}`} align="right">
             {
-              rounding(
+              formatNumber(
                 transactions.find((i) => i.date === `${year}-${month}`)?.dividends
                   .filter((d) => d.currency === currency)
                   .reduce((result, d) => result + Number(d[prop]), 0),
@@ -92,7 +92,7 @@ export function Dividends() {
       }
       <TableCell align="right">
         {
-          rounding(
+          formatNumber(
             transactions.filter((i) => i.date.startsWith(String(year)))
               .reduce((rm, dm) => rm + dm.dividends
                 .filter((d) => d.currency === currency).reduce((r, d) => r + Number(d[prop]), 0), 0),

@@ -290,7 +290,10 @@ export const getHistory = (securityId: number, startDate?: Date, endDate?: Date)
   });
 };
 
-export const getPortfolioHistory = (currency: string): Promise<PorftolioQuote[]> => {
+export const getPortfolioHistory = (currency: string, startDate: Date, endDate: Date): Promise<PorftolioQuote[]> => {
+  startDate = startDate ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1));
+  endDate = endDate ?? new Date();
+
   const queryString = sql(`
     SELECT
       pf_value.currency,
@@ -318,6 +321,7 @@ export const getPortfolioHistory = (currency: string): Promise<PorftolioQuote[]>
     ) AS pf_value
     WHERE pf_value.currency = :currency
       AND WEEKDAY(pf_value.date) NOT IN (5, 6)
+      AND pf_value.date BETWEEN :startDate AND :endDate
     GROUP BY
       pf_value.currency,
       pf_value.date
@@ -326,7 +330,7 @@ export const getPortfolioHistory = (currency: string): Promise<PorftolioQuote[]>
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString({ currency }),
+      queryString({ currency, startDate, endDate }),
       (err, result) => {
         if (err) { reject(err); return; }
 

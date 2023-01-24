@@ -3,7 +3,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { getAccountSummary, getTrades } from '../types/service';
 import { groupBy, getTotal, CurrencyOverview } from '../data/overview';
-import { rounding } from '../data/formatting';
+import { formatNumber } from '../data/formatting';
 
 function DashboardContent() {
   const [trades, setTrades] = React.useState<CurrencyOverview[] | null>(null);
@@ -52,7 +52,7 @@ function DashboardContent() {
               trades && trades.map((item) => (
                 <>
                   <Grid item xs={6}>{item.currency}</Grid>
-                  <Grid item xs={6}>{rounding(item.sum, 2)}</Grid>
+                  <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
                 </>
               ))
             }
@@ -64,7 +64,7 @@ function DashboardContent() {
           accounts && accounts.map((item) => (
             <>
               <Grid item xs={6}>{item.currency}</Grid>
-              <Grid item xs={6}>{rounding(item.sum, 2)}</Grid>
+              <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
             </>
           ))
         }
@@ -74,7 +74,7 @@ function DashboardContent() {
           all && all.map((item) => (
             <>
               <Grid item xs={6}>{item.currency}</Grid>
-              <Grid item xs={6}>{rounding(item.sum, 2)}</Grid>
+              <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
             </>
           ))
         }

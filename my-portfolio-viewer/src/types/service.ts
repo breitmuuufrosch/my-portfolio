@@ -8,7 +8,7 @@ import {
   SecurityQuote,
 } from '@backend/types/security';
 import { Currency } from '@backend/types/currency';
-import { dateString } from 'src/data/formatting';
+import { isoDate } from 'src/data/formatting';
 
 export const getServiceData = async <T>(uri: string): Promise<T> => {
   const response = await fetch(uri, {
@@ -50,12 +50,13 @@ export const getSecurities = async (): Promise<Security[]> => (
 
 export const getSecurityQuotes = async (symbol: string, startDate: Date, endDate: Date): Promise<SecurityQuote[]> => (
   getServiceData<SecurityQuote[]>(
-    `http://localhost:3333/securities/${symbol}/prices?start=${dateString(startDate)}&end=${dateString(endDate)}`,
+    `http://localhost:3333/securities/${symbol}/prices?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
   )
 );
 
 export const getSecurityTransactionDetailsS = async (symbol: string): Promise<SecurityHistory[]> => (
-  getServiceData<SecurityHistory[]>(`http://localhost:3333/securities/${symbol}/histories`)
+  (await getServiceData<SecurityHistory[]>(`http://localhost:3333/securities/${symbol}/histories`))
+    .map((sh: SecurityHistory) => ({ ...sh, date: new Date(sh.date) }))
 );
 
 export const getSecurityHistoryById = async (id: number): Promise<SecurityHistory> => (
@@ -68,6 +69,6 @@ export const getPortfolioQuotes = async (
   endDate: Date,
 ): Promise<PorftolioQuote[]> => (
   getServiceData<PorftolioQuote[]>(
-    `http://localhost:3333/histories/portfolios/${currency}?start=${dateString(startDate)}&end=${dateString(endDate)}`,
+    `http://localhost:3333/histories/portfolios/${currency}?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
   )
 );
