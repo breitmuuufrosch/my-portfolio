@@ -4,6 +4,7 @@ SELECT
     (t.exit_price - t.entry_price_all) * 100 / t.entry_price_all AS profit_loss_percentage
 FROM (
 	SELECT
+		a.user_id,
 		s.id,
 		s.name_long AS name,
 		s.symbol,
@@ -18,6 +19,7 @@ FROM (
 		sph_hi.date AS last_date,
 		CASE WHEN SUM(sh.amount) = 0 THEN SUM(CASE WHEN sh.amount < 0 THEN sh.value - sh.fee - sh.tax ELSE 0 END) ELSE CAST(SUM(sh.amount) * sph_hi.close AS DECIMAL(19, 4)) END AS exit_price
 	FROM security_history AS sh
+    LEFT JOIN account AS a ON a.id = sh.account_id
 	LEFT JOIN security AS s ON sh.security_id = s.id
 	LEFT JOIN (
 		SELECT sph.*
@@ -30,6 +32,6 @@ FROM (
 		) AS sph_sorted ON sph_sorted.security_id = sph.security_id and sph_sorted.max_date = sph.date
 	) as sph_hi on sph_hi.security_id = s.id
 	WHERE sh.type IN ('buy', 'sell', 'posting')
-	GROUP BY s.id, s.name_long, s.symbol, s.quote_type, s.currency
+	GROUP BY a.user_id, s.id, s.name_long, s.symbol, s.quote_type, s.currency
 ) AS t
 ORDER BY t.symbol

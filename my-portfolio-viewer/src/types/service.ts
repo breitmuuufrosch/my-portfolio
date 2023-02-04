@@ -10,9 +10,15 @@ import {
 import { Currency } from '@backend/types/currency';
 import { isoDate } from 'src/data/formatting';
 
+const USER_ID = 1;
+
 export const getServiceData = async <T>(uri: string): Promise<T> => {
   const response = await fetch(uri, {
     method: 'GET',
+    headers: {
+      // Authorization: `Bearer ${USER_ID}`,
+      'x-user-id': `${USER_ID}`,
+    },
   });
   const jsonResponse = await response.json();
   return jsonResponse;
@@ -48,11 +54,17 @@ export const getSecurities = async (): Promise<Security[]> => (
   getServiceData<Security[]>('http://localhost:3333/securities')
 );
 
-export const getSecurityQuotes = async (symbol: string, startDate: Date, endDate: Date): Promise<SecurityQuote[]> => (
-  getServiceData<SecurityQuote[]>(
-    `http://localhost:3333/securities/${symbol}/prices?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
-  )
-);
+export const getSecurityQuotes = async (
+  symbol: string,
+  startDate: Date,
+  endDate: Date,
+  showPl: boolean,
+): Promise<PorftolioQuote[] | SecurityQuote[]> => {
+  const params = `start=${isoDate(startDate)}&end=${isoDate(endDate)}&showPl=${showPl}`;
+  return getServiceData<PorftolioQuote[] | SecurityQuote[]>(
+    `http://localhost:3333/securities/${symbol}/prices?${params}`,
+  );
+};
 
 export const getSecurityTransactionDetailsS = async (symbol: string): Promise<SecurityHistory[]> => (
   (await getServiceData<SecurityHistory[]>(`http://localhost:3333/securities/${symbol}/histories`))

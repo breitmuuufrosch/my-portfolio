@@ -1,5 +1,10 @@
 import * as React from 'react';
-import { Grid, Button } from '@mui/material';
+import {
+  FormControlLabel,
+  Grid,
+  Button,
+  Switch,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   Line,
@@ -7,6 +12,7 @@ import {
   YAxis,
   Label,
   ResponsiveContainer,
+  ReferenceLine,
   CartesianGrid,
   Tooltip,
   Legend,
@@ -82,6 +88,7 @@ function Chart(props: {
   const [domain, setDomain] = React.useState<number[]>([0, 1]);
   const [durations, setDurations] = React.useState<Duration[]>([]);
   const [currentDuration, setCurrentDuration] = React.useState<string>('1J');
+  const [showPl, setShowPl] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     const newDurations: Duration[] = [];
@@ -107,6 +114,7 @@ function Chart(props: {
 
   React.useEffect(() => {
     console.log('chart', symbol);
+
     if (['CHF', 'EUR', 'USD'].includes(symbol)) {
       getPortfolioQuotes(symbol, dates[0], dates[1])
         .then(
@@ -114,8 +122,12 @@ function Chart(props: {
             console.log(result);
             // const dictionary = Object.assign({}, ...result.map((x) => ({ [String(x.date)]: x.value })));
             // console.log(dictionary);
-            setSecurityHistory(result.map((item) => ({ date: isoDate(item.date), value: item.value, traded: [] })));
-            const closeValues = result.map((item) => item.value);
+            setSecurityHistory(result.map((item) => ({
+              date: isoDate(item.date),
+              value: showPl ? item.value - item.entryPrice : item.value,
+              traded: [],
+            })));
+            const closeValues = result.map((item) => (showPl ? item.value - item.entryPrice : item.value));
             const minValue = Math.min(...closeValues);
             const maxValue = Math.max(...closeValues);
             const range = maxValue - minValue;
@@ -123,15 +135,15 @@ function Chart(props: {
           },
         );
     } else {
-      getSecurityQuotes(symbol, dates[0], dates[1])
+      getSecurityQuotes(symbol, dates[0], dates[1], true)
         .then(
           (result) => {
             const newHistory: HistoryItem[] = result.map((item) => ({
               date: isoDate(item.date),
-              value: item.close,
+              value: showPl ? item.value - item.entryPrice : item.close,
               traded: [],
             }));
-            const closeValues = result.map((item) => item.close);
+            const closeValues = result.map((item) => (showPl ? item.value - item.entryPrice : item.close));
             const minValue = Math.min(...closeValues);
             const maxValue = Math.max(...closeValues);
             const range = maxValue - minValue;
@@ -147,9 +159,9 @@ function Chart(props: {
                   const dataPoint = newHistory.find((h) => h.date === isoDate(transaction.date));
                   if (dataPoint) {
                     if (transaction.type === 'buy') {
-                      dataPoint.buy = transaction.price;
+                      dataPoint.buy = showPl ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'sell') {
-                      dataPoint.sell = transaction.price;
+                      dataPoint.sell = showPl ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'dividend') {
                       dataPoint.dividend = dataPoint.value;
                     }
@@ -173,7 +185,7 @@ function Chart(props: {
           },
         );
     }
-  }, [symbol, dates]);
+  }, [symbol, dates, showPl]);
 
   React.useEffect(() => {
     console.log(securityHistory);
@@ -182,13 +194,15 @@ function Chart(props: {
   return (
     <>
       <Grid container spacing={0}>
-        <Grid container item xs={6} sx={{ flexDirection: 'row' }}>
-          <Grid item xs={10}>
-            <Title>{symbol}</Title>
-          </Grid>
-          <Grid item xs={2} style={{ color: (profitLoss > 0) ? 'green' : 'red' }}>
-            {formatPercentage(profitLoss, 2)}
-          </Grid>
+        <Grid container item xs={4} sx={{ flexDirection: 'row' }}>
+          <Title>
+            <div style={{ flexDirection: 'column' }}>
+              {symbol}
+              <span style={{ color: (profitLoss > 0) ? 'green' : 'red', paddingLeft: '10px' }}>
+                {`(${formatPercentage(profitLoss, 2)})`}
+              </span>
+            </div>
+          </Title>
         </Grid>
         <Grid container spacing={1} justifyContent="flex-end" xs={6}>
           {
@@ -205,6 +219,22 @@ function Chart(props: {
               </Grid>
             ))
           }
+        </Grid>
+        <Grid xs={2}>
+          <FormControlLabel
+            control={(
+              <Switch
+                defaultChecked
+                size="small"
+                checked={showPl}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setShowPl(event.target.checked);
+                }}
+              />
+            )}
+            labelPlacement="top"
+            label="P/L"
+          />
         </Grid>
       </Grid>
       <ResponsiveContainer>
@@ -243,6 +273,7 @@ function Chart(props: {
               Price
             </Label>
           </YAxis>
+          <ReferenceLine y={0} />
           <Line
             isAnimationActive={false}
             type="monotone"

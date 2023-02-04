@@ -4,6 +4,7 @@ import Paper from '@mui/material/Paper';
 import { getAccountSummary, getTrades } from '../types/service';
 import { groupBy, getTotal, CurrencyOverview } from '../data/overview';
 import { formatNumber } from '../data/formatting';
+import { Title } from './Title';
 
 function DashboardContent() {
   const [trades, setTrades] = React.useState<CurrencyOverview[] | null>(null);
@@ -46,13 +47,31 @@ function DashboardContent() {
   return (
     <Grid container spacing={2}>
       <Grid container item xs={4}>
+        <Grid item xs={12}>
+          <Paper sx={styleElement}>
+            <Title>Deposit</Title>
+            <Grid container>
+              {
+                trades && trades.map((item) => (
+                  <>
+                    <Grid item xs={6}>{item.currency}</Grid>
+                    <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
+                  </>
+                ))
+              }
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+      <Grid item xs={4}>
         <Paper sx={styleElement}>
-          <Grid item xs={12}>
+          <Title>Savings</Title>
+          <Grid container>
             {
-              trades && trades.map((item) => (
+              accounts && accounts.map((item) => (
                 <>
                   <Grid item xs={6}>{item.currency}</Grid>
-                  <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
+                  <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
                 </>
               ))
             }
@@ -60,24 +79,19 @@ function DashboardContent() {
         </Paper>
       </Grid>
       <Grid item xs={4}>
-        {
-          accounts && accounts.map((item) => (
-            <>
-              <Grid item xs={6}>{item.currency}</Grid>
-              <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
-            </>
-          ))
-        }
-      </Grid>
-      <Grid item xs={4}>
-        {
-          all && all.map((item) => (
-            <>
-              <Grid item xs={6}>{item.currency}</Grid>
-              <Grid item xs={6}>{formatNumber(item.sum, 2)}</Grid>
-            </>
-          ))
-        }
+        <Paper sx={styleElement}>
+          <Title>Total</Title>
+          <Grid container>
+            {
+              all && all.map((item) => (
+                <>
+                  <Grid item xs={6}>{item.currency}</Grid>
+                  <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
+                </>
+              ))
+            }
+          </Grid>
+        </Paper>
       </Grid>
     </Grid>
   );

@@ -9,17 +9,20 @@ import { handleRequest } from '../utils/server';
 const accountRouter = express.Router();
 
 accountRouter.get('/', async (req: Request, res: Response) => {
-  handleRequest<Account[]>(res, accountModel.findAll());
+  const userId = Number(req.headers['x-user-id']);
+  handleRequest<Account[]>(res, accountModel.findAll(userId));
 });
 
 accountRouter.get('/:accountId/histories', async (req: Request, res: Response) => {
   const { accountId } = req.params;
-  const requestPromise = accountHistoryModel.findAll({ accountId: Number(accountId) });
+  const userId = Number(req.headers['x-user-id']);
+  const requestPromise = accountHistoryModel.findAll({ userId, accountId: Number(accountId) });
   handleRequest<AccountHistory[]>(res, requestPromise);
 });
 
 accountRouter.get('/summary', async (req: Request, res: Response) => {
-  const requestPromise = accountHistoryModel.getSummary();
+  const userId = Number(req.headers['x-user-id']);
+  const requestPromise = accountHistoryModel.getSummary(userId);
   handleRequest<AccountSummary[]>(res, requestPromise);
 });
 

@@ -5,7 +5,8 @@ import { Trade } from '../types/trade';
 const tradeRouter = express.Router();
 
 tradeRouter.get('/', async (req: Request, res: Response) => {
-  tradeModel.findAll()
+  const userId = Number(req.headers['x-user-id']);
+  tradeModel.findAll(userId)
     .then((trades: Trade[]) => {
       res.status(200).json(trades);
     })

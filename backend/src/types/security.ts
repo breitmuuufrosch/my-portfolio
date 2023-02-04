@@ -45,6 +45,8 @@ export interface SecurityQuote {
 export interface PorftolioQuote {
   date: Date,
   value: number,
+  entryPrice: number,
+  close: number,
   currency: string,
 }
 

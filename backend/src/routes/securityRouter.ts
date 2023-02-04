@@ -3,7 +3,7 @@ import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityHistory';
 import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
-import { Security, SecurityHistory, SecurityQuote } from '../types/security';
+import { PorftolioQuote, Security, SecurityHistory, SecurityQuote } from '../types/security';
 import { Trade } from '../types/trade';
 import { transactionRouter } from './security/transactionRouter';
 
@@ -13,8 +13,9 @@ securityRouter.use('/transaction', transactionRouter);
 
 securityRouter.get('/dividends', async (req: Request, res: Response) => {
   type TradeInfo = [string, number];
+  const userId = Number(req.headers['x-user-id']);
 
-  tradeModel.findAll()
+  tradeModel.findAll(userId)
     .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount]))
     .then((securities: TradeInfo[]) => {
       const allDividends = securities.map((trade: TradeInfo) => (
@@ -69,10 +70,11 @@ securityRouter.get('/:symbol', async (req: Request, res: Response) => {
 
 securityRouter.get('/:symbol/histories', async (req: Request, res: Response) => {
   const { symbol } = req.params;
+  const userId = Number(req.headers['x-user-id']);
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityHistoryModel.findAll({ securityId: security.id })
+      securityHistoryModel.findAll({ userId, securityId: security.id })
         .then((currencies: SecurityHistory[]) => { res.status(200).json(currencies); });
     })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
@@ -80,17 +82,33 @@ securityRouter.get('/:symbol/histories', async (req: Request, res: Response) => 
 
 securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
   const symbol = String(req.params.symbol);
+  const userId = Number(req.headers['x-user-id']);
   const startDate = new Date(String(req.query.start));
   const endDate = new Date(String(req.query.end));
+  const showPl = String(req.query.showPl);
+  console.log(showPl, JSON.parse(String(req.query.showPl)), req.query.showPl);
 
-  securityModel.findOne(symbol)
-    .then((security: Security) => {
-      securityModel.getHistory(security.id, startDate, endDate)
-        .then((securityQuotes: SecurityQuote[]) => res.status(200).json(securityQuotes));
-    })
-    .catch((err: Error) => {
-      res.status(500).json({ message: err.message });
-    });
+  if (showPl === 'true') {
+    console.log('oh no')
+    securityModel.findOne(symbol)
+      .then((security: Security) => {
+        securityModel.getSecurityHistory(userId, security.id, startDate, endDate)
+          .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes))
+          .catch((err: Error) => {
+            res.status(500).json({ message: err.message });
+          });
+      });
+  } else {
+    console.log('haha')
+    securityModel.findOne(symbol)
+      .then((security: Security) => {
+        securityModel.getHistory(security.id, startDate, endDate)
+          .then((securityQuotes: SecurityQuote[]) => res.status(200).json(securityQuotes));
+      })
+      .catch((err: Error) => {
+        res.status(500).json({ message: err.message });
+      });
+  }
 });
 
 securityRouter.put('/:symbol', async (req: Request, res: Response) => {

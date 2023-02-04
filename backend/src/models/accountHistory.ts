@@ -35,20 +35,23 @@ const rowToAccountTransaction = (row: RowDataPacket): AccountTransaction => ({
 });
 
 export interface AccountHistoryParams {
+  userId: number,
   accountId?: number,
   type?: string,
 }
 
-export const findOne = (id: number): Promise<AccountTransaction> => {
+export const findOne = (userId: number, id: number): Promise<AccountTransaction> => {
   let queryString = `
     SELECT *
     FROM account_transaction_detailed AS atd
-    WHERE atd.id = :id
+    WHERE
+      atd.user_id = :userId
+      AND atd.id = :id
   `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      sql(queryString)({ id }),
+      sql(queryString)({ userId, id }),
       (err, result) => {
         if (err) { reject(err); return; }
 
@@ -66,19 +69,16 @@ export const findAll = (params: AccountHistoryParams): Promise<AccountHistory[]>
     FROM account_history AS ah
   `;
 
-  if (params.accountId || params.type) {
-    const filters = [];
-
-    if (params.accountId) {
-      filters.push('ah.account_id = :accountId');
-    }
-    if (params.type) {
-      filters.push('ah.type = :type');
-    }
-    queryString += `
-    WHERE ${filters.join(' AND ')}
-    `;
+  const filters = ['ah.user_id = :userId'];
+  if (params.accountId) {
+    filters.push('ah.account_id = :accountId');
   }
+  if (params.type) {
+    filters.push('ah.type = :type');
+  }
+  queryString += `
+  WHERE ${filters.join(' AND ')}
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
@@ -93,8 +93,8 @@ export const findAll = (params: AccountHistoryParams): Promise<AccountHistory[]>
   });
 };
 
-export const getSummary = (): Promise<AccountSummary[]> => {
-  const queryString = `
+export const getSummary = (userId: number): Promise<AccountSummary[]> => {
+  const queryString = sql(`
     SELECT
       a.id,
       a.name,
@@ -102,12 +102,13 @@ export const getSummary = (): Promise<AccountSummary[]> => {
       SUM(ah.total) AS balance
     FROM account_history AS ah
     LEFT JOIN account AS a ON a.id = ah.account_id
+    WHERE a.user_id = :userId
     GROUP BY a.id, a.name, a.currency
-  `;
+  `);
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString,
+      queryString({ userId }),
       (err, result) => {
         if (err) { reject(err); return; }
 

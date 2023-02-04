@@ -139,7 +139,7 @@ export const createAccountTransaction = (accountTransaction: AccountTransaction)
     VALUES (:from_currency, :from_value, :from_fee, :from_tax);
     SET @account_transfer_from := LAST_INSERT_ID();
       
-    INSERT INTO account_transaction (date, 'type', from_account_id, from_money_id, to_account_id, to_money_id)
+    INSERT INTO account_transaction (date, type, from_account_id, from_money_id, to_account_id, to_money_id)
     VALUES (:date, :type, :from_account_id, @account_transfer_from, :to_account_id, @account_transfer_to);
   `);
 

@@ -4,6 +4,7 @@ import { db } from '../db';
 import { SecurityHistory } from '../types/security';
 
 export interface SecurityHistoryParams {
+  userId: number,
   securityId?: number,
   type?: string,
 }
@@ -27,16 +28,18 @@ const rowToSecurityHistory = (row: RowDataPacket): SecurityHistory => ({
 });
 
 
-export const findOne = (id: number): Promise<SecurityHistory> => {
+export const findOne = (userId: number, id: number): Promise<SecurityHistory> => {
   let queryString = `
     SELECT *
     FROM security_history AS sh
-    WHERE sh.id = :id
+    WHERE 
+      sh.user_id = :userId
+      AND sh.id = :id
   `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      sql(queryString)({ id }),
+      sql(queryString)({ id, userId }),
       (err, result) => {
         if (err) { reject(err); return; }
 
@@ -53,9 +56,7 @@ export const findAll = (params: SecurityHistoryParams): Promise<SecurityHistory[
     FROM security_history AS sh
   `;
 
-  if (params.securityId || params.type) {
-    const filters = [];
-
+    const filters = ['sh.user_id = :userId'];
     if (params.securityId) {
       filters.push('sh.security_id = :securityId');
     }
@@ -65,7 +66,6 @@ export const findAll = (params: SecurityHistoryParams): Promise<SecurityHistory[
     queryString += `
     WHERE ${filters.join(' AND ')}
     `;
-  }
 
   return new Promise((resolve, reject) => {
     db.query(

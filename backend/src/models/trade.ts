@@ -1,10 +1,12 @@
 import { RowDataPacket } from 'mysql2';
+import { mysql as sql } from 'yesql';
 import { db } from '../db';
 import { Trade } from '../types/trade';
 
-export const findAll = (): Promise<Trade[]> => {
+export const findAll = (userId: number): Promise<Trade[]> => {
   const queryString = `
   SELECT
+    user_id,
     name,
     symbol,
     quote_type,
@@ -18,11 +20,12 @@ export const findAll = (): Promise<Trade[]> => {
     profit_loss,
     profit_loss_percentage
   FROM trade
+  WHERE trade.user_id = :userId
   `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString,
+      sql(queryString)({ userId }),
       (err, result) => {
         if (err) { reject(err); return; }
 

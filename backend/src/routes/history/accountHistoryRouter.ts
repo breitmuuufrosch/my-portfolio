@@ -8,8 +8,10 @@ const accountHistoryRouter = express.Router();
 
 accountHistoryRouter.get('/', async (req: Request, res: Response) => {
   const { accountId, type } = req.query;
+  const userId = Number(req.headers['x-user-id']);
 
   const requestPromise = accountHistoryModel.findAll({
+    userId,
     accountId: Number(accountId),
     type: type ? String(type) : undefined,
    });
@@ -18,8 +20,9 @@ accountHistoryRouter.get('/', async (req: Request, res: Response) => {
 
 accountHistoryRouter.get('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
+  const userId = Number(req.headers['x-user-id']);
 
-  handleRequest(res, accountHistoryModel.findOne(Number(id)));
+  handleRequest(res, accountHistoryModel.findOne(userId, Number(id)));
 });
 
 export { accountHistoryRouter };
