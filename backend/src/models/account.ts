@@ -1,7 +1,7 @@
 import { RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { Account, AccountHistory, AccountSummary } from '../types/account';
+import { Account, AccountTransactionSummary, AccountSummary } from '../types/account';
 
 export const findAll = (userId): Promise<Account[]> => {
   const queryString = `

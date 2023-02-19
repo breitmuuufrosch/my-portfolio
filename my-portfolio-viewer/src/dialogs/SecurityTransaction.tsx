@@ -15,11 +15,11 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Security, SecurityHistory, AccountTransaction } from '@backend/types/security';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { MobileDatePicker } from '@mui/x-date-pickers/MobileDatePicker';
-import { Account } from '@backend/types/account';
+import { Account, AccountTransaction } from '@backend/types/account';
+import { Security, SecurityTransactionSummary } from '@backend/types/security';
 import {
   getAccountTransactionById,
   getAccounts,
@@ -51,7 +51,7 @@ const styleCurrency = { display: 'flex', alignItems: 'center' };
 const styleSpacerXs = { display: { xs: 'flex', md: 'none' }, alignItems: 'center' };
 const styleSpacerLg = { display: { xs: 'none', md: 'flex' }, alignItems: 'center' };
 
-export const transactionTotal = (transaction: SecurityHistory) => {
+export const transactionTotal = (transaction: SecurityTransactionSummary) => {
   if (['buy', 'posting'].includes(transaction.type)) {
     return transaction.value + transaction.fee + transaction.tax;
   }
@@ -98,7 +98,7 @@ export function SecurityTransactionDialog(props: {
 }) {
   const { open, transactionId, handleClose } = props;
 
-  const [transaction, setTransaction] = React.useState<SecurityHistory>(null);
+  const [transaction, setTransaction] = React.useState<SecurityTransactionSummary>(null);
   const [accountTransaction, setAccountTransaction] = React.useState<AccountTransaction>(null);
   // const [currencies, setCurrencies] = React.useState<Currency[]>(null);
   const [securities, setSecurities] = React.useState<Security[]>(null);
@@ -121,7 +121,7 @@ export function SecurityTransactionDialog(props: {
     }
 
     getSecurityHistoryById(transactionId)
-      .then((newTransaction: SecurityHistory) => {
+      .then((newTransaction: SecurityTransactionSummary) => {
         setTransaction(newTransaction);
 
         if (newTransaction.accountTransactionId !== null) {
@@ -269,7 +269,7 @@ export function SecurityTransactionDialog(props: {
                           <Grid item xs={12}>
                             <DropDown
                               label="AccountId (from)"
-                              value={accountTransaction.from_account_id}
+                              value={accountTransaction.fromAccountId}
                               items={accounts}
                               itemKey={(item) => String(item.id)}
                               itemDisplay={(item) => `${item.name} (${item.currency})`}
@@ -285,31 +285,31 @@ export function SecurityTransactionDialog(props: {
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Value (from)"
-                              value={accountTransaction.from_value}
+                              value={accountTransaction.fromValue}
                               onChange={(value: number) => { updateAccountTransaction({ from_value: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.from_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.fromCurrency}</Grid>
                         </Grid>
                         <Grid container item spacing={2}>
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Fee (from)"
-                              value={accountTransaction.from_fee}
+                              value={accountTransaction.fromFee}
                               onChange={(value: number) => { updateAccountTransaction({ from_fee: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.from_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.fromCurrency}</Grid>
                         </Grid>
                         <Grid container item spacing={2}>
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Tax (from)"
-                              value={accountTransaction.from_tax}
+                              value={accountTransaction.fromTax}
                               onChange={(value: number) => { updateAccountTransaction({ from_tax: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.from_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.fromCurrency}</Grid>
                         </Grid>
                       </Grid>
                       <Grid container item xs={12} md={4} spacing={2} flexDirection="column">
@@ -317,7 +317,7 @@ export function SecurityTransactionDialog(props: {
                           <Grid item xs={12}>
                             <DropDown
                               label="AccountId (to)"
-                              value={accountTransaction.to_account_id}
+                              value={accountTransaction.toAccountId}
                               items={accounts}
                               itemKey={(item) => String(item.id)}
                               itemDisplay={(item) => `${item.name} (${item.currency})`}
@@ -333,31 +333,31 @@ export function SecurityTransactionDialog(props: {
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Value (to)"
-                              value={accountTransaction.to_value}
+                              value={accountTransaction.toValue}
                               onChange={(value: number) => { updateAccountTransaction({ to_value: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.to_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.toCurrency}</Grid>
                         </Grid>
                         <Grid container item spacing={2}>
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Fee (to)"
-                              value={accountTransaction.to_fee}
+                              value={accountTransaction.toFee}
                               onChange={(value: number) => { updateAccountTransaction({ to_fee: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.to_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.toCurrency}</Grid>
                         </Grid>
                         <Grid container item spacing={2}>
                           <Grid item xs={10} md={9}>
                             <InputDecimal
                               label="Tax (to)"
-                              value={accountTransaction.to_tax}
+                              value={accountTransaction.toTax}
                               onChange={(value: number) => { updateAccountTransaction({ to_tax: value }); }}
                             />
                           </Grid>
-                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.to_currency}</Grid>
+                          <Grid item xs={2} md={3} style={styleCurrency}>{accountTransaction.toCurrency}</Grid>
                         </Grid>
                       </Grid>
                       <Grid item xs={4} sx={styleSpacerLg} />

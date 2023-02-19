@@ -1,16 +1,18 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../../models/security';
 import * as yahooFinance from '../../models/yahooApi';
-import { Security, SecurityQuote } from '../../types/security';
+import { Security, SecurityPrice } from '../../types/security';
 
 const priceHistoryRouter = express.Router();
 
 priceHistoryRouter.post('/update-all', async (req: Request, res: Response) => {
-  securityModel.findAll()
+  const userId = Number(req.headers['x-user-id']);
+  
+  securityModel.findAll(Number.isNaN(userId) ? -1 : userId)
     .then((securities: Security[]) => {
       const allUpdates = securities.map((security: Security) => new Promise((resolve, reject) => {
         yahooFinance.getHistory(security.symbol)
-          .then((history: SecurityQuote[]) => {
+          .then((history: SecurityPrice[]) => {
             if (history.length === 0) { return resolve({ symbol: security.symbol, success: true }); }
             const securityHistory = history.map((row) => ({
               ...row,

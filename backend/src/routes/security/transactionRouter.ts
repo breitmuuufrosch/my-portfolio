@@ -9,7 +9,7 @@ transactionRouter.post('/', async (req: Request, res: Response) => {
   const transaction = req.body as SecurityTransaction;
 
   securityModel.findOne(transaction.symbol)
-    .then((security) => transactionModel.createTransaction({ ...transaction, security_id: security.id }))
+    .then((security) => transactionModel.createTransaction({ ...transaction, securityId: security.id }))
     .then((insertedIds) => { res.status(200).json({ data: insertedIds }); })
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
@@ -20,7 +20,7 @@ transactionRouter.post('/multiple', async (req: Request, res: Response) => {
   Promise.all(transactions.map((item) => new Promise((resolve, reject) => {
     securityModel.findOne(item.symbol)
       .then((security: Security) => {
-        const updatedSecurity = { ...item, security_id: security.id };
+        const updatedSecurity = { ...item, securityId: security.id };
 
         transactionModel.doesExistTransaction(updatedSecurity)
           .then((exists: boolean) => {

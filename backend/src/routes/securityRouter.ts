@@ -3,7 +3,7 @@ import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityHistory';
 import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
-import { PorftolioQuote, Security, SecurityHistory, SecurityQuote } from '../types/security';
+import { PorftolioQuote, Security, SecurityTransaction, SecurityPrice } from '../types/security';
 import { Trade } from '../types/trade';
 import { transactionRouter } from './security/transactionRouter';
 
@@ -15,15 +15,19 @@ securityRouter.get('/dividends', async (req: Request, res: Response) => {
   type TradeInfo = [string, number];
   const userId = Number(req.headers['x-user-id']);
 
+  interface DividendInfo {
+    symbol: string, total: number, exDividendDate?: Date, payDividendDate?: Date,
+  }
+
   tradeModel.findAll(userId)
     .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount]))
     .then((securities: TradeInfo[]) => {
       const allDividends = securities.map((trade: TradeInfo) => (
-        new Promise<{ symbol: string, total: number }>((resolve) => {
+        new Promise<DividendInfo>((resolve) => {
           yahooFinance.getDividends(trade[0])
             .then((divResult) => {
               if (Number.isNaN(divResult.dividendRate) === false) {
-                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1] });
+                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1], exDividendDate: divResult.exDividendDate, payDividendDate: divResult.dividendDate });
               } else {
                 resolve({ symbol: trade[0], total: 0 });
               }
@@ -56,8 +60,19 @@ securityRouter.get('/dividends/:id', async (req: Request, res: Response) => {
 });
 
 securityRouter.get('/', async (req: Request, res: Response) => {
-  securityModel.findAll()
+  const userId = Number(req.headers['x-user-id']);
+
+  securityModel.findAll(userId)
     .then((securities: Security[]) => { res.status(200).json(securities); })
+    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+});
+
+securityRouter.post('/', async (req: Request, res: Response) => {
+  const { symbol, isin } = req.body;
+  const security = await yahooFinance.findOne(symbol, isin);
+
+  securityModel.create(security)
+    .then(() => { res.status(200).json(security); })
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 
@@ -66,49 +81,6 @@ securityRouter.get('/:symbol', async (req: Request, res: Response) => {
   securityModel.findOne(symbol)
     .then((security: Security) => { res.status(200).json(security); })
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
-});
-
-securityRouter.get('/:symbol/histories', async (req: Request, res: Response) => {
-  const { symbol } = req.params;
-  const userId = Number(req.headers['x-user-id']);
-
-  securityModel.findOne(symbol)
-    .then((security: Security) => {
-      securityHistoryModel.findAll({ userId, securityId: security.id })
-        .then((currencies: SecurityHistory[]) => { res.status(200).json(currencies); });
-    })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
-});
-
-securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
-  const symbol = String(req.params.symbol);
-  const userId = Number(req.headers['x-user-id']);
-  const startDate = new Date(String(req.query.start));
-  const endDate = new Date(String(req.query.end));
-  const showPl = String(req.query.showPl);
-  console.log(showPl, JSON.parse(String(req.query.showPl)), req.query.showPl);
-
-  if (showPl === 'true') {
-    console.log('oh no')
-    securityModel.findOne(symbol)
-      .then((security: Security) => {
-        securityModel.getSecurityHistory(userId, security.id, startDate, endDate)
-          .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes))
-          .catch((err: Error) => {
-            res.status(500).json({ message: err.message });
-          });
-      });
-  } else {
-    console.log('haha')
-    securityModel.findOne(symbol)
-      .then((security: Security) => {
-        securityModel.getHistory(security.id, startDate, endDate)
-          .then((securityQuotes: SecurityQuote[]) => res.status(200).json(securityQuotes));
-      })
-      .catch((err: Error) => {
-        res.status(500).json({ message: err.message });
-      });
-  }
 });
 
 securityRouter.put('/:symbol', async (req: Request, res: Response) => {
@@ -133,13 +105,31 @@ securityRouter.put('/:symbol', async (req: Request, res: Response) => {
     });
 });
 
-securityRouter.post('/', async (req: Request, res: Response) => {
-  const { symbol, isin } = req.body;
-  const security = await yahooFinance.findOne(symbol, isin);
+securityRouter.get('/:symbol/transactions', async (req: Request, res: Response) => {
+  const { symbol } = req.params;
+  const userId = Number(req.headers['x-user-id']);
 
-  securityModel.create(security)
-    .then(() => { res.status(200).json(security); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+  const security: Security = await securityModel.findOne(symbol);
+
+  securityHistoryModel.findAll({ userId, securityId: security.id })
+    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
+    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+});
+
+securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
+  const symbol = String(req.params.symbol);
+  const userId = Number(req.headers['x-user-id']);
+  const startDate = new Date(String(req.query.start));
+  const endDate = new Date(String(req.query.end));
+
+  securityModel.findOne(symbol)
+    .then((security: Security) => {
+      securityModel.getSecurityHistory(userId, security.id, startDate, endDate)
+        .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes))
+        .catch((err: Error) => {
+          res.status(500).json({ message: err.message });
+        });
+    });
 });
 
 securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
@@ -158,7 +148,7 @@ securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
         .catch(() => {
           const security = {
             symbol,
-            quoteType: item.quote_type,
+            quoteType: item.quoteType,
             nameLong: item.name,
             nameShort: item.name,
             currency: item.currency,

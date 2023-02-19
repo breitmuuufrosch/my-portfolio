@@ -1,7 +1,7 @@
 import { RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { SecurityHistory } from '../types/security';
+import { SecurityTransactionSummary } from '../types/security';
 
 export interface SecurityHistoryParams {
   userId: number,
@@ -9,7 +9,7 @@ export interface SecurityHistoryParams {
   type?: string,
 }
 
-const rowToSecurityHistory = (row: RowDataPacket): SecurityHistory => ({
+const rowToSecurityHistory = (row: RowDataPacket): SecurityTransactionSummary => ({
   id: row.id,
   symbol: row.symbol,
   nameShort: row.name_short,
@@ -28,13 +28,13 @@ const rowToSecurityHistory = (row: RowDataPacket): SecurityHistory => ({
 });
 
 
-export const findOne = (userId: number, id: number): Promise<SecurityHistory> => {
+export const findOne = (userId: number, id: number): Promise<SecurityTransactionSummary> => {
   let queryString = `
     SELECT *
-    FROM security_history AS sh
+    FROM security_transaction_summary AS sts
     WHERE 
-      sh.user_id = :userId
-      AND sh.id = :id
+      sts.user_id = :userId
+      AND sts.id = :id
   `;
 
   return new Promise((resolve, reject) => {
@@ -50,18 +50,18 @@ export const findOne = (userId: number, id: number): Promise<SecurityHistory> =>
   });
 };
 
-export const findAll = (params: SecurityHistoryParams): Promise<SecurityHistory[]> => {
+export const findAll = (params: SecurityHistoryParams): Promise<SecurityTransactionSummary[]> => {
   let queryString = `
     SELECT *
-    FROM security_history AS sh
+    FROM security_transaction_summary AS sts
   `;
 
-    const filters = ['sh.user_id = :userId'];
+    const filters = ['sts.user_id = :userId'];
     if (params.securityId) {
-      filters.push('sh.security_id = :securityId');
+      filters.push('sts.security_id = :securityId');
     }
     if (params.type) {
-      filters.push('sh.type = :type');
+      filters.push('sts.type = :type');
     }
     queryString += `
     WHERE ${filters.join(' AND ')}

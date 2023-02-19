@@ -53,10 +53,10 @@ function DashboardContent() {
             <Grid container>
               {
                 trades && trades.map((item) => (
-                  <>
+                  <Grid container item key={item.currency}>
                     <Grid item xs={6}>{item.currency}</Grid>
                     <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
-                  </>
+                  </Grid>
                 ))
               }
             </Grid>
@@ -69,10 +69,10 @@ function DashboardContent() {
           <Grid container>
             {
               accounts && accounts.map((item) => (
-                <>
+                <Grid container item key={item.currency}>
                   <Grid item xs={6}>{item.currency}</Grid>
                   <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
-                </>
+                </Grid>
               ))
             }
           </Grid>
@@ -84,10 +84,10 @@ function DashboardContent() {
           <Grid container>
             {
               all && all.map((item) => (
-                <>
+                <Grid container item key={item.currency}>
                   <Grid item xs={6}>{item.currency}</Grid>
                   <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
-                </>
+                </Grid>
               ))
             }
           </Grid>

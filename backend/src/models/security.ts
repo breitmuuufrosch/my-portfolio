@@ -1,7 +1,7 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { PorftolioQuote, Security, SecurityQuote } from '../types/security';
+import { PorftolioQuote, Security, SecurityPrice } from '../types/security';
 
 export const findOne = (symbol: string): Promise<Security> => {
   const queryString = sql(`
@@ -52,7 +52,7 @@ export const findOne = (symbol: string): Promise<Security> => {
   });
 };
 
-export const findAll = (): Promise<Security[]> => {
+export const findAll = (userId: number): Promise<Security[]> => {
   const queryString = `
     SELECT
       s.id,
@@ -69,13 +69,15 @@ export const findAll = (): Promise<Security[]> => {
       t.amount
     FROM security AS s
     LEFT JOIN trade AS t ON t.id = s.id
+    WHERE
+      t.user_id = :userId OR :userId = -1
   `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString,
+      sql(queryString)({ userId }),
       (err, result) => {
-        if (err) { reject(err); return; }
+        if (err) { console.log(sql(queryString)({ userId })); reject(err); return; }
 
         const rows = <RowDataPacket[]>result;
         const security: Security[] = rows.map((row) => ({
@@ -92,6 +94,7 @@ export const findAll = (): Promise<Security[]> => {
           source_url: row.source_url,
           holdings: row.number,
         }));
+        console.log(security);
         resolve(security);
       },
     );
@@ -196,9 +199,9 @@ export const createMultiple = (securities: Security[]): Promise<string> => {
   });
 };
 
-export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
+export const updateHistory = (history: SecurityPrice[]): Promise<string> => {
   const queryString = `
-    INSERT INTO security_price_history (
+    INSERT INTO security_price (
       security_id,
       date,
       high,
@@ -244,7 +247,7 @@ export const updateHistory = (history: SecurityQuote[]): Promise<string> => {
   });
 };
 
-export const getHistory = (securityId: number, startDate?: Date, endDate?: Date): Promise<SecurityQuote[]> => {
+export const getHistory = (securityId: number, startDate?: Date, endDate?: Date): Promise<SecurityPrice[]> => {
   startDate = startDate ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1));
   endDate = endDate ?? new Date();
 
@@ -258,7 +261,7 @@ export const getHistory = (securityId: number, startDate?: Date, endDate?: Date)
       sph.close,
       sph.adjclose,
       sph.volume
-    FROM security_price_history as sph
+    FROM security_price as sph
     WHERE
       sph.security_id = :securityId
       AND sph.date BETWEEN :startDate AND :endDate
@@ -273,7 +276,7 @@ export const getHistory = (securityId: number, startDate?: Date, endDate?: Date)
         if (err) { reject(err); return; }
 
         const rows = <RowDataPacket[]>result;
-        const securityQuotes: SecurityQuote[] = rows.map((row) => ({
+        const securityQuotes: SecurityPrice[] = rows.map((row) => ({
           symbol: row.symbol,
           security_id: row.security_id,
           date: row.date,
@@ -311,9 +314,9 @@ export const getPortfolioHistory = (userId: number, currency: string, startDate:
         SUM(security_summary.amount) AS amount,
         SUM(security_summary.amount) * sph.close AS value,
         SUM(security_summary.value) AS entry_price
-      FROM security_price_history AS sph
+      FROM security_price AS sph
       LEFT JOIN security AS s_details ON s_details.id = sph.security_id
-      INNER JOIN security_history AS security_summary ON
+      INNER JOIN security_transaction_summary AS security_summary ON
         security_summary.security_id = sph.security_id
         AND security_summary.date <= sph.date
         AND security_summary.type IN ('buy', 'sell', 'posting')
@@ -377,9 +380,9 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
         SUM(security_summary.amount) AS amount,
         SUM(security_summary.amount) * sph.close AS value,
         SUM(security_summary.value) AS entry_price
-      FROM security_price_history AS sph
+      FROM security_price AS sph
       LEFT JOIN security AS s_details ON s_details.id = sph.security_id
-      LEFT JOIN security_history AS security_summary ON
+      LEFT JOIN security_transaction_summary AS security_summary ON
         security_summary.security_id = sph.security_id
         AND security_summary.date <= sph.date
         AND security_summary.type IN ('buy', 'sell', 'posting')

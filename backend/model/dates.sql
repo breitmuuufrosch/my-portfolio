@@ -17,7 +17,7 @@ WITH dates AS (
 ),
 security_values AS (
 	SELECT sph.security_id, s_details.currency, sph.date, SUM(security_summary.amount) AS amount, SUM(security_summary.amount) * sph.close AS value
-	FROM security_price_history AS sph
+	FROM security_price AS sph
 	LEFT JOIN security AS s_details ON s_details.id = sph.security_id
 	INNER JOIN security_transaction_summary AS security_summary ON security_summary.security_id = sph.security_id AND security_summary.date <= sph.date
 	-- WHERE sph.security_id IN (120)

@@ -1,10 +1,5 @@
 import * as React from 'react';
-import {
-  FormControlLabel,
-  Grid,
-  Button,
-  Switch,
-} from '@mui/material';
+import { Grid, Button } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
   Line,
@@ -19,7 +14,7 @@ import {
   ComposedChart,
   Scatter,
 } from 'recharts';
-import { SecurityHistory } from '@backend/types/security';
+import { PorftolioQuote, SecurityTransactionSummary } from '@backend/types/security';
 import { getPortfolioQuotes, getSecurityQuotes, getSecurityTransactionDetailsS } from 'src/types/service';
 import { Title } from './Title';
 import {
@@ -32,7 +27,7 @@ import {
 interface HistoryItem {
   date: string,
   value: number,
-  traded: SecurityHistory[],
+  traded: SecurityTransactionSummary[],
   buy?: number,
   sell?: number,
   dividend?: number,
@@ -44,8 +39,13 @@ interface Duration {
   end: Date,
 }
 
+enum ViewMode {
+  PRICE = 'price',
+  PL = 'pl',
+  VALUE = 'value',
+}
+
 function CustomTooltip({ active, payload, label }: any) {
-  // console.log(payload);
   if (active && payload && payload.length) {
     return (
       <Grid
@@ -60,7 +60,7 @@ function CustomTooltip({ active, payload, label }: any) {
         <Grid item>{label}</Grid>
         <Grid item sx={{ pb: 2 }}>{`price: ${payload[0].value}`}</Grid>
         {
-          payload[0].payload.traded.map((trade: SecurityHistory) => (
+          payload[0].payload.traded.map((trade: SecurityTransactionSummary) => (
             <Grid item key={trade.id}>
               {`${formatDate(trade.date)}: ${trade.type} ${trade.amount} (${trade.value})`}
             </Grid>
@@ -88,7 +88,12 @@ function Chart(props: {
   const [domain, setDomain] = React.useState<number[]>([0, 1]);
   const [durations, setDurations] = React.useState<Duration[]>([]);
   const [currentDuration, setCurrentDuration] = React.useState<string>('1J');
-  const [showPl, setShowPl] = React.useState<boolean>(false);
+  const [viewMode, setViewMode] = React.useState<ViewMode>(ViewMode.PRICE);
+  const [availableViewModes, setAvailableViewModes] = React.useState<ViewMode[]>([
+    ViewMode.VALUE,
+    ViewMode.PL,
+    ViewMode.PRICE,
+  ]);
 
   React.useEffect(() => {
     const newDurations: Duration[] = [];
@@ -108,9 +113,21 @@ function Chart(props: {
       label: 'YTD', start: new Date(new Date().setFullYear(new Date().getFullYear(), 0, 1)), end: new Date(),
     });
     newDurations.push({ label: 'MAX', start: new Date(1970, 0, 1), end: new Date() });
+    newDurations.push({ label: 'Trade', start: new Date(1970, 0, 1), end: new Date() });
 
     setDurations(newDurations);
   }, []);
+
+  const calculateChartValue = (item: PorftolioQuote): number => {
+    switch (viewMode) {
+      case ViewMode.PRICE:
+        return item.close;
+      case ViewMode.PL:
+        return item.value - item.entryPrice;
+      default:
+        return item.value;
+    }
+  };
 
   React.useEffect(() => {
     console.log('chart', symbol);
@@ -119,15 +136,17 @@ function Chart(props: {
       getPortfolioQuotes(symbol, dates[0], dates[1])
         .then(
           (result) => {
-            console.log(result);
+            setAvailableViewModes([ViewMode.PL, ViewMode.VALUE]);
+            setViewMode(viewMode === ViewMode.PRICE ? ViewMode.VALUE : viewMode);
             // const dictionary = Object.assign({}, ...result.map((x) => ({ [String(x.date)]: x.value })));
             // console.log(dictionary);
-            setSecurityHistory(result.map((item) => ({
+            const newHistory: HistoryItem[] = result.map((item) => ({
               date: isoDate(item.date),
-              value: showPl ? item.value - item.entryPrice : item.value,
+              value: calculateChartValue(item), // viewMode ? item.value - item.entryPrice : item.value,
               traded: [],
-            })));
-            const closeValues = result.map((item) => (showPl ? item.value - item.entryPrice : item.value));
+            }));
+            setSecurityHistory(newHistory);
+            const closeValues = newHistory.map((item) => item.value);
             const minValue = Math.min(...closeValues);
             const maxValue = Math.max(...closeValues);
             const range = maxValue - minValue;
@@ -135,33 +154,41 @@ function Chart(props: {
           },
         );
     } else {
-      getSecurityQuotes(symbol, dates[0], dates[1], true)
-        .then(
-          (result) => {
-            const newHistory: HistoryItem[] = result.map((item) => ({
-              date: isoDate(item.date),
-              value: showPl ? item.value - item.entryPrice : item.close,
-              traded: [],
-            }));
-            const closeValues = result.map((item) => (showPl ? item.value - item.entryPrice : item.close));
-            const minValue = Math.min(...closeValues);
-            const maxValue = Math.max(...closeValues);
-            const range = maxValue - minValue;
-            setDomain([minValue - (0.02 * range), maxValue + (0.02 * range)]);
+      getSecurityTransactionDetailsS(symbol)
+        .then((transactions: SecurityTransactionSummary[]) => {
+          let startDate = dates[0];
 
-            const firstPrice = closeValues.slice(0)[0];
-            const lastPrice = closeValues.slice(-1)[0];
-            setProfitLoss((100 * (lastPrice - firstPrice)) / firstPrice);
+          if (currentDuration === 'Trade') {
+            startDate = new Date(transactions.map((item) => item.date).reduce((pre, cur) => (pre > cur ? cur : pre)));
+            startDate = new Date(startDate.setDate(startDate.getDate() - 5));
+          }
 
-            getSecurityTransactionDetailsS(symbol)
-              .then((transactions: SecurityHistory[]) => {
+          getSecurityQuotes(symbol, startDate, dates[1])
+            .then(
+              (result) => {
+                setAvailableViewModes([ViewMode.PRICE, ViewMode.PL, ViewMode.VALUE]);
+                const newHistory: HistoryItem[] = result.map((item) => ({
+                  date: isoDate(item.date),
+                  value: calculateChartValue(item), // viewMode ? item.value - item.entryPrice : item.close,
+                  traded: [],
+                }));
+                const closeValues = newHistory.map((item) => item.value);
+                const minValue = Math.min(...closeValues);
+                const maxValue = Math.max(...closeValues);
+                const range = maxValue - minValue;
+                setDomain([minValue - (0.02 * range), maxValue + (0.02 * range)]);
+
+                const firstPrice = closeValues.slice(0)[0];
+                const lastPrice = closeValues.slice(-1)[0];
+                setProfitLoss((100 * (lastPrice - firstPrice)) / firstPrice);
+
                 transactions.forEach((transaction) => {
                   const dataPoint = newHistory.find((h) => h.date === isoDate(transaction.date));
                   if (dataPoint) {
                     if (transaction.type === 'buy') {
-                      dataPoint.buy = showPl ? dataPoint.value : transaction.price;
+                      dataPoint.buy = viewMode ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'sell') {
-                      dataPoint.sell = showPl ? dataPoint.value : transaction.price;
+                      dataPoint.sell = viewMode ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'dividend') {
                       dataPoint.dividend = dataPoint.value;
                     }
@@ -170,22 +197,19 @@ function Chart(props: {
                   Array.from({ length: 11 }, (_, i) => i - 5).forEach((i) => {
                     let newDate = new Date(transaction.date);
                     newDate = new Date(newDate.setDate(newDate.getDate() + i));
-                    console.log(i, transaction.date, typeof newDate, newDate);
                     const infoDataPoint = newHistory.find((h) => h.date === isoDate(newDate));
                     if (infoDataPoint) {
                       infoDataPoint.traded.push(transaction);
                     }
                   });
-
-                  console.log(newHistory.find((h) => h.date === isoDate(new Date(transaction.date))));
                 });
 
                 setSecurityHistory(newHistory);
-              });
-          },
-        );
+              },
+            );
+        });
     }
-  }, [symbol, dates, showPl]);
+  }, [symbol, dates, viewMode]);
 
   React.useEffect(() => {
     console.log(securityHistory);
@@ -194,7 +218,7 @@ function Chart(props: {
   return (
     <>
       <Grid container spacing={0}>
-        <Grid container item xs={4} sx={{ flexDirection: 'row' }}>
+        <Grid container item xs={6} sx={{ flexDirection: 'row' }}>
           <Title>
             <div style={{ flexDirection: 'column' }}>
               {symbol}
@@ -204,37 +228,39 @@ function Chart(props: {
             </div>
           </Title>
         </Grid>
-        <Grid container spacing={1} justifyContent="flex-end" xs={6}>
-          {
-            durations.map((duration) => (
-              <Grid item key={duration.label}>
-                <Button
-                  href="#"
-                  variant={currentDuration === duration.label ? 'contained' : 'text'}
-                  onClick={() => { setDates([duration.start, duration.end]); setCurrentDuration(duration.label); }}
-                  sx={{ p: 0.25, m: 0, minWidth: 10 }}
-                >
-                  {duration.label}
-                </Button>
-              </Grid>
-            ))
-          }
-        </Grid>
-        <Grid xs={2}>
-          <FormControlLabel
-            control={(
-              <Switch
-                defaultChecked
-                size="small"
-                checked={showPl}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  setShowPl(event.target.checked);
-                }}
-              />
-            )}
-            labelPlacement="top"
-            label="P/L"
-          />
+        <Grid container item spacing={1} justifyContent="flex-end" xs={6}>
+          <Grid container item spacing={1} justifyContent="flex-end" xs={12}>
+            {
+              durations.map((duration) => (
+                <Grid item key={duration.label}>
+                  <Button
+                    href="#"
+                    variant={currentDuration === duration.label ? 'contained' : 'text'}
+                    onClick={() => { setDates([duration.start, duration.end]); setCurrentDuration(duration.label); }}
+                    sx={{ p: 0.25, m: 0, minWidth: 10 }}
+                  >
+                    {duration.label}
+                  </Button>
+                </Grid>
+              ))
+            }
+          </Grid>
+          <Grid container item spacing={1} justifyContent="flex-end" xs={12}>
+            {
+              availableViewModes.map((duration: ViewMode) => (
+                <Grid item key={duration}>
+                  <Button
+                    href="#"
+                    variant={viewMode === duration ? 'contained' : 'text'}
+                    onClick={() => { setViewMode(duration); }}
+                    sx={{ p: 0.25, m: 0, minWidth: 10 }}
+                  >
+                    {duration}
+                  </Button>
+                </Grid>
+              ))
+            }
+          </Grid>
         </Grid>
       </Grid>
       <ResponsiveContainer>
@@ -306,69 +332,10 @@ function Chart(props: {
             fill="#8884d8"
             legendType="circle"
           />
-          {/* {
-            securityTransactions && securityTransactions?.map((transaction) => (
-              <ReferenceLine x={isoDate(transaction.date)} label={transaction.type} />
-            ))
-          } */}
-
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
           <Legend layout="vertical" verticalAlign="top" align="right" wrapperStyle={{ paddingLeft: 15 }} />
         </ComposedChart>
       </ResponsiveContainer>
-      {/* <ResponsiveContainer>
-        <LineChart
-          data={securityHistory}
-          margin={{
-            top: 16,
-            right: 0,
-            bottom: 0,
-            left: 24,
-          }}
-        >
-          <CartesianGrid stroke="#ccc" strokeDasharray="5 5" />
-
-          <XAxis
-            dataKey="date"
-            stroke={theme.palette.text.secondary}
-            style={theme.typography.body2}
-            ticks={dates.map((item) => item.toLocaleDateString())}
-          />
-          <YAxis
-            stroke={theme.palette.text.secondary}
-            style={theme.typography.body2}
-            domain={domain}
-            tickFormatter={(value: string) => String(formatNumber(Number(value), 2))}
-          >
-            <Label
-              angle={270}
-              position="left"
-              style={{
-                textAnchor: 'middle',
-                fill: theme.palette.text.primary,
-                ...theme.typography.body1,
-              }}
-            >
-              Price
-            </Label>
-          </YAxis>
-          <Line
-            isAnimationActive={false}
-            type="monotone"
-            dataKey="value"
-            stroke={theme.palette.primary.main}
-            dot={false}
-          />
-          {
-            securityTransactions && securityTransactions?.map((transaction) => (
-              <ReferenceLine x={isoDate(transaction.date)} label={transaction.type} />
-            ))
-          }
-
-          <Tooltip />
-          <Legend />
-        </LineChart>
-      </ResponsiveContainer> */}
     </>
   );
 }

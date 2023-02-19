@@ -2,8 +2,7 @@ import express, { Request, Response } from 'express';
 import * as accountModel from '../models/account';
 import * as accountHistoryModel from '../models/accountHistory';
 import * as transactionModel from '../models/transaction';
-import { Account, AccountHistory, AccountSummary } from '../types/account';
-import { AccountTransaction } from '../types/security';
+import { Account, AccountTransaction, AccountTransactionSummary, AccountSummary } from '../types/account';
 import { handleRequest } from '../utils/server';
 
 const accountRouter = express.Router();
@@ -17,7 +16,7 @@ accountRouter.get('/:accountId/histories', async (req: Request, res: Response) =
   const { accountId } = req.params;
   const userId = Number(req.headers['x-user-id']);
   const requestPromise = accountHistoryModel.findAll({ userId, accountId: Number(accountId) });
-  handleRequest<AccountHistory[]>(res, requestPromise);
+  handleRequest<AccountTransactionSummary[]>(res, requestPromise);
 });
 
 accountRouter.get('/summary', async (req: Request, res: Response) => {

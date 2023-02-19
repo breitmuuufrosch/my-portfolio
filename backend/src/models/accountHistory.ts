@@ -1,10 +1,9 @@
 import { RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { AccountHistory, AccountSummary } from '../types/account';
-import { AccountTransaction } from '../types/security';
+import { AccountTransaction, AccountTransactionSummary, AccountSummary } from '../types/account';
 
-const rowToAccountHistory = (row: RowDataPacket): AccountHistory => ({
+const rowToAccountTransactionSummary = (row: RowDataPacket): AccountTransactionSummary => ({
   id: row.id,
   accountId: row.account_id,
   securityId: row.security_id,
@@ -22,16 +21,16 @@ const rowToAccountHistory = (row: RowDataPacket): AccountHistory => ({
 const rowToAccountTransaction = (row: RowDataPacket): AccountTransaction => ({
   date: row.date,
   type: row.type,
-  from_account_id: row.from_account_id,
-  from_currency: row.from_currency,
-  from_value: Number(row.from_value),
-  from_fee: Number(row.from_fee),
-  from_tax: Number(row.from_tax),
-  to_account_id: row.to_account_id,
-  to_currency: row.to_currency,
-  to_value: Number(row.to_value),
-  to_fee: Number(row.to_fee),
-  to_tax: Number(row.to_tax),
+  fromAccountId: row.from_account_id,
+  fromCurrency: row.from_currency,
+  fromValue: Number(row.from_value),
+  fromFee: Number(row.from_fee),
+  fromTax: Number(row.from_tax),
+  toAccountId: row.to_account_id,
+  toCurrency: row.to_currency,
+  toValue: Number(row.to_value),
+  toFee: Number(row.to_fee),
+  toTax: Number(row.to_tax),
 });
 
 export interface AccountHistoryParams {
@@ -63,18 +62,18 @@ export const findOne = (userId: number, id: number): Promise<AccountTransaction>
 };
 
 
-export const findAll = (params: AccountHistoryParams): Promise<AccountHistory[]> => {
+export const findAll = (params: AccountHistoryParams): Promise<AccountTransactionSummary[]> => {
   let queryString = `
     SELECT *
-    FROM account_history AS ah
+    FROM account_transaction_summary AS ats
   `;
 
-  const filters = ['ah.user_id = :userId'];
+  const filters = ['ats.user_id = :userId'];
   if (params.accountId) {
-    filters.push('ah.account_id = :accountId');
+    filters.push('ats.account_id = :accountId');
   }
   if (params.type) {
-    filters.push('ah.type = :type');
+    filters.push('ats.type = :type');
   }
   queryString += `
   WHERE ${filters.join(' AND ')}
@@ -87,7 +86,7 @@ export const findAll = (params: AccountHistoryParams): Promise<AccountHistory[]>
         if (err) { reject(err); return; }
 
         const rows = <RowDataPacket[]>result;
-        resolve(rows.map(rowToAccountHistory));
+        resolve(rows.map(rowToAccountTransactionSummary));
       },
     );
   });
@@ -99,9 +98,9 @@ export const getSummary = (userId: number): Promise<AccountSummary[]> => {
       a.id,
       a.name,
       a.currency,
-      SUM(ah.total) AS balance
-    FROM account_history AS ah
-    LEFT JOIN account AS a ON a.id = ah.account_id
+      SUM(ats.total) AS balance
+    FROM account_transaction_summary AS ats
+    LEFT JOIN account AS a ON a.id = ats.account_id
     WHERE a.user_id = :userId
     GROUP BY a.id, a.name, a.currency
   `);

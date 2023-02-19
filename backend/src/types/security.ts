@@ -1,3 +1,5 @@
+export type SecurityTransactionType = 'buy' | 'sell' | 'posting' | 'dividend' | 'tax_refund';
+
 export interface Security {
   id: number,
   symbol: string,
@@ -13,9 +15,9 @@ export interface Security {
   sourceUrl?: string,
 }
 
-export interface SecurityHistory {
+export interface SecurityTransactionSummary {
   id: number,
-  type: string,
+  type: SecurityTransactionType,
   accountId: number,
   accountTransactionId: number,
   securityId: number,
@@ -31,7 +33,7 @@ export interface SecurityHistory {
   tax: number,
 }
 
-export interface SecurityQuote {
+export interface SecurityPrice {
   security_id: number,
   date: Date,
   high: number,
@@ -51,11 +53,11 @@ export interface PorftolioQuote {
 }
 
 export interface SecurityTransaction {
-  security_id: number,
+  securityId: number,
   symbol: string,
   date: Date,
-  type: string,
-  acount_id: number,
+  type: SecurityTransactionType,
+  accountId: number,
   currency: string,
   price: number,
   amount: number,
@@ -65,42 +67,15 @@ export interface SecurityTransaction {
 }
 
 export interface SecurityTransactionForeign extends SecurityTransaction {
-  exchange_to_value: number,
-  exchange_from_currency: string,
-  exchange_from_value: number,
-  exchange_from_fee: number,
-  exchange_from_tax: number,
-  exchange_from_account_id: number,
+  exchangeToValue: number,
+  exchangeFromCurrency: string,
+  exchangeFromValue: number,
+  exchangeFromFee: number,
+  exchangeFromTax: number,
+  exchangeFromAccountId: number,
 }
 
-export enum AccountTransactionType {
-  payment,
-  payout,
-  transfer,
-  fee,
-  fee_refund,
-  tax,
-  tax_refund,
-  interest,
-  interest_charge,
-}
-
-export interface AccountTransaction {
-  date: Date,
-  type: AccountTransactionType,
-  from_account_id: number,
-  from_currency: string,
-  from_value: number,
-  from_fee: number,
-  from_tax: number,
-  to_account_id: number,
-  to_currency: string,
-  to_value: number,
-  to_fee: number,
-  to_tax: number,
-}
-
-export const transactionTotal = (transaction: SecurityHistory) => {
+export const transactionTotal = (transaction: SecurityTransaction) => {
   if (['buy', 'posting'].includes(transaction.type)) {
     return transaction.value + transaction.fee + transaction.tax;
   }

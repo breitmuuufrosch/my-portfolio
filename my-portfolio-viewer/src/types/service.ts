@@ -1,12 +1,15 @@
-import { Account, AccountHistory, AccountSummary } from '@backend/types/account';
-import { Trade } from '@backend/types/trade';
 import {
+  Account,
   AccountTransaction,
+  AccountTransactionSummary,
+  AccountSummary,
+} from '@backend/types/account';
+import {
   PorftolioQuote,
   Security,
-  SecurityHistory,
-  SecurityQuote,
+  SecurityTransactionSummary,
 } from '@backend/types/security';
+import { Trade } from '@backend/types/trade';
 import { Currency } from '@backend/types/currency';
 import { isoDate } from 'src/data/formatting';
 
@@ -36,12 +39,12 @@ export const getAccountSummary = async (): Promise<AccountSummary[]> => (
   getServiceData<AccountSummary[]>('http://localhost:3333/accounts/summary')
 );
 
-export const getAccountHistory = async (accountId: number): Promise<AccountHistory[]> => (
-  getServiceData<AccountHistory[]>(`http://localhost:3333/accounts/${accountId}/histories`)
+export const getAccountHistory = async (accountId: number): Promise<AccountTransactionSummary[]> => (
+  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/accounts/${accountId}/histories`)
 );
 
-export const getAccountHistoryByType = async (type: string): Promise<AccountHistory[]> => (
-  getServiceData<AccountHistory[]>(`http://localhost:3333/histories/accounts/?type=${type}`)
+export const getAccountHistoryByType = async (type: string): Promise<AccountTransactionSummary[]> => (
+  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/histories/accounts/?type=${type}`)
 );
 
 export const getAccountTransactionById = async (id: number): Promise<AccountTransaction> => (
@@ -58,21 +61,19 @@ export const getSecurityQuotes = async (
   symbol: string,
   startDate: Date,
   endDate: Date,
-  showPl: boolean,
-): Promise<PorftolioQuote[] | SecurityQuote[]> => {
-  const params = `start=${isoDate(startDate)}&end=${isoDate(endDate)}&showPl=${showPl}`;
-  return getServiceData<PorftolioQuote[] | SecurityQuote[]>(
-    `http://localhost:3333/securities/${symbol}/prices?${params}`,
-  );
-};
-
-export const getSecurityTransactionDetailsS = async (symbol: string): Promise<SecurityHistory[]> => (
-  (await getServiceData<SecurityHistory[]>(`http://localhost:3333/securities/${symbol}/histories`))
-    .map((sh: SecurityHistory) => ({ ...sh, date: new Date(sh.date) }))
+): Promise<PorftolioQuote[]> => (
+  getServiceData<PorftolioQuote[]>(
+    `http://localhost:3333/securities/${symbol}/prices?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
+  )
 );
 
-export const getSecurityHistoryById = async (id: number): Promise<SecurityHistory> => (
-  getServiceData<SecurityHistory>(`http://localhost:3333/histories/securities/${id}`)
+export const getSecurityTransactionDetailsS = async (symbol: string): Promise<SecurityTransactionSummary[]> => (
+  (await getServiceData<SecurityTransactionSummary[]>(`http://localhost:3333/securities/${symbol}/transactions`))
+    .map((sh: SecurityTransactionSummary) => ({ ...sh, date: new Date(sh.date) }))
+);
+
+export const getSecurityHistoryById = async (id: number): Promise<SecurityTransactionSummary> => (
+  getServiceData<SecurityTransactionSummary>(`http://localhost:3333/histories/securities/${id}`)
 );
 
 export const getPortfolioQuotes = async (

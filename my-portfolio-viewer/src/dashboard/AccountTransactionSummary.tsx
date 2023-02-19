@@ -6,7 +6,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { useSearchParams } from 'react-router-dom';
-import { AccountHistory } from '@backend/types/account';
+import { AccountTransactionSummary } from '@backend/types/account';
 import { Title } from './Title';
 import { getAccountHistory } from '../types/service';
 import { formatNumber } from '../data/formatting';
@@ -15,14 +15,14 @@ function preventDefault(event: React.MouseEvent) {
   event.preventDefault();
 }
 
-interface AccountHistoryCum extends AccountHistory {
+interface AccountTransactionSummaryCum extends AccountTransactionSummary {
   cumsum: number,
 }
 
-export function AccountsHistory() {
+export function AccountTransactionSummaryView() {
   const [searchParams] = useSearchParams();
 
-  const [accountSummary, setAccountSummary] = React.useState<AccountHistoryCum[] | null>(null);
+  const [accountSummary, setAccountSummary] = React.useState<AccountTransactionSummaryCum[] | null>(null);
 
   React.useEffect(() => {
     getAccountHistory(Number(searchParams.get('accountId'))).then(

@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as accountHistoryModel from '../../models/accountHistory';
-import { AccountHistory } from '../../types/account';
-import { AccountTransaction } from '../../types/security';
+import { AccountTransaction, AccountTransactionSummary } from '../../types/account';
 import { handleRequest } from '../../utils/server';
 
 const accountHistoryRouter = express.Router();
@@ -15,7 +14,7 @@ accountHistoryRouter.get('/', async (req: Request, res: Response) => {
     accountId: Number(accountId),
     type: type ? String(type) : undefined,
    });
-   handleRequest<AccountHistory[]>(res, requestPromise);
+   handleRequest<AccountTransactionSummary[]>(res, requestPromise);
 });
 
 accountHistoryRouter.get('/:id', async (req: Request, res: Response) => {
