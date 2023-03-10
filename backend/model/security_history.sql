@@ -5,7 +5,7 @@ SELECT
 FROM (
 	SELECT std.user_id, std.id, std.type, std.date, std.account_id, std.account_transaction_id, std.security_id, currency, std.price, -std.amount AS amount, std.value - std.fee - std.tax AS total, std.value, std.fee, std.tax
     FROM security_transaction_detailed AS std
-    WHERE std.type IN ('sell')
+    WHERE std.type IN ('sell','vesting')
     
     UNION
     

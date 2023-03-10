@@ -131,8 +131,8 @@ export function SecurityTransactionDialog(props: {
       });
   }, [transactionId]);
 
-  if (transaction === null) {
-    return (<p>Not yet available</p>);
+  if (transaction == null) {
+    return (null);
   }
 
   return (

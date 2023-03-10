@@ -61,7 +61,7 @@ export const createTransaction = (securityTransaction: SecurityTransaction): Pro
 
   let query;
 
-  if (Object.prototype.hasOwnProperty.call(securityTransaction, 'exchange_from_currency')) {
+  if (Object.prototype.hasOwnProperty.call(securityTransaction, 'exchangeFromCurrency')) {
     query = queryForeignCurrency;
   } else {
     query = queryMainCurrency;
@@ -147,11 +147,11 @@ export const createAccountTransaction = (accountTransaction: AccountTransaction)
   let query;
 
   if (
-    Object.prototype.hasOwnProperty.call(accountTransaction, 'from_account_id')
-    && Object.prototype.hasOwnProperty.call(accountTransaction, 'to_account_id')
+    Object.prototype.hasOwnProperty.call(accountTransaction, 'fromAccountId')
+    && Object.prototype.hasOwnProperty.call(accountTransaction, 'toAccountId')
   ) {
     query = queryStringExchange;
-  } else if (Object.prototype.hasOwnProperty.call(accountTransaction, 'from_account_id')) {
+  } else if (Object.prototype.hasOwnProperty.call(accountTransaction, 'fromAccountId')) {
     query = queryStringPayout;
   } else {
     query = queryStringPayment;

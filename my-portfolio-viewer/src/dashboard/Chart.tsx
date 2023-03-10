@@ -75,8 +75,9 @@ function CustomTooltip({ active, payload, label }: any) {
 
 function Chart(props: {
   symbol: string,
+  accountId?: number,
 }) {
-  const { symbol } = props;
+  const { symbol, accountId } = props;
   const theme = useTheme();
 
   const [dates, setDates] = React.useState<Date[]>(
@@ -154,7 +155,7 @@ function Chart(props: {
           },
         );
     } else {
-      getSecurityTransactionDetailsS(symbol)
+      getSecurityTransactionDetailsS(symbol, accountId)
         .then((transactions: SecurityTransactionSummary[]) => {
           let startDate = dates[0];
 
@@ -209,7 +210,7 @@ function Chart(props: {
             );
         });
     }
-  }, [symbol, dates, viewMode]);
+  }, [symbol, accountId, dates, viewMode]);
 
   React.useEffect(() => {
     console.log(securityHistory);
@@ -218,7 +219,7 @@ function Chart(props: {
   return (
     <>
       <Grid container spacing={0}>
-        <Grid container item xs={6} sx={{ flexDirection: 'row' }}>
+        <Grid container item xs={4} sx={{ flexDirection: 'row' }}>
           <Title>
             <div style={{ flexDirection: 'column' }}>
               {symbol}
@@ -228,7 +229,7 @@ function Chart(props: {
             </div>
           </Title>
         </Grid>
-        <Grid container item spacing={1} justifyContent="flex-end" xs={6}>
+        <Grid container item spacing={1} justifyContent="flex-end" xs={8}>
           <Grid container item spacing={1} justifyContent="flex-end" xs={12}>
             {
               durations.map((duration) => (
@@ -339,5 +340,9 @@ function Chart(props: {
     </>
   );
 }
+
+Chart.defaultProps = {
+  accountId: 0,
+};
 
 export { Chart };

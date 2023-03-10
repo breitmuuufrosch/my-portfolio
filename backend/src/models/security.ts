@@ -44,8 +44,8 @@ export const findOne = (symbol: string): Promise<Security> => {
             sourceUrl: row.source_url,
           };
           resolve(security);
-        } catch (error: unknown) {
-          reject(new Error(`${symbol}: ${error}`));
+        } catch (error: any) {
+          reject(new Error(`${symbol}: ${String(error)}`));
         }
       },
     );
@@ -94,7 +94,6 @@ export const findAll = (userId: number): Promise<Security[]> => {
           source_url: row.source_url,
           holdings: row.number,
         }));
-        console.log(security);
         resolve(security);
       },
     );
@@ -313,7 +312,8 @@ export const getPortfolioHistory = (userId: number, currency: string, startDate:
         sph.close,
         SUM(security_summary.amount) AS amount,
         SUM(security_summary.amount) * sph.close AS value,
-        SUM(security_summary.value) AS entry_price
+        -- SUM(security_summary.value) AS entry_price
+        SUM(CASE WHEN security_summary.type IN ('sell','vesting') THEN -security_summary.value ELSE security_summary.value END) AS entry_price
       FROM security_price AS sph
       LEFT JOIN security AS s_details ON s_details.id = sph.security_id
       INNER JOIN security_transaction_summary AS security_summary ON
@@ -379,13 +379,14 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
         sph.close,
         SUM(security_summary.amount) AS amount,
         SUM(security_summary.amount) * sph.close AS value,
-        SUM(security_summary.value) AS entry_price
+        -- SUM(security_summary.value) AS entry_price
+        SUM(CASE WHEN security_summary.type IN ('sell','vesting') THEN -security_summary.value ELSE security_summary.value END) AS entry_price
       FROM security_price AS sph
       LEFT JOIN security AS s_details ON s_details.id = sph.security_id
       LEFT JOIN security_transaction_summary AS security_summary ON
         security_summary.security_id = sph.security_id
         AND security_summary.date <= sph.date
-        AND security_summary.type IN ('buy', 'sell', 'posting')
+        AND security_summary.type IN ('buy', 'sell', 'posting','vesting')
       LEFT JOIN account AS a ON a.id = security_summary.account_id
       WHERE sph.security_id IN (:securityId)
       GROUP BY

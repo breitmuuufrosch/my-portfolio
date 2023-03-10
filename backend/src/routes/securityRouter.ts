@@ -109,10 +109,24 @@ securityRouter.get('/:symbol/transactions', async (req: Request, res: Response) 
   const { symbol } = req.params;
   const userId = Number(req.headers['x-user-id']);
 
-  const security: Security = await securityModel.findOne(symbol);
+  securityModel.findOne(symbol)
+    .then((security: Security) => {
+      securityHistoryModel.findAll({ userId, securityId: security.id })
+        .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); });
+    })
+    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+});
 
-  securityHistoryModel.findAll({ userId, securityId: security.id })
-    .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); })
+securityRouter.get('/:symbol/transactions/:accountId', async (req: Request, res: Response) => {
+  const { symbol } = req.params;
+  const userId = Number(req.headers['x-user-id']);
+  const accountId = Number(req.params.accountId);
+
+  securityModel.findOne(symbol)
+    .then((security: Security) => {
+      securityHistoryModel.findAll({ userId, accountId, securityId: security.id })
+        .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); });
+    })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
 });
 
@@ -125,10 +139,10 @@ securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
   securityModel.findOne(symbol)
     .then((security: Security) => {
       securityModel.getSecurityHistory(userId, security.id, startDate, endDate)
-        .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes))
-        .catch((err: Error) => {
-          res.status(500).json({ message: err.message });
-        });
+        .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes));
+    })
+    .catch((err: Error) => {
+      res.status(500).json({ message: err.message });
     });
 });
 

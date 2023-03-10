@@ -1,24 +1,14 @@
 import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import Link from '@mui/material/Link';
-import Table from '@mui/material/Table';
 import { Button } from '@mui/material';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import { useSearchParams } from 'react-router-dom';
 import { SecurityTransactionSummary } from '@backend/types/security';
-import { Title } from './Title';
 import { Chart } from './Chart';
 import { getSecurityTransactionDetailsS } from '../types/service';
-import { formatNumber } from '../data/formatting';
+import { formatDate, formatNumber } from '../data/formatting';
 import { SecurityTransactionDialog } from '../dialogs/SecurityTransaction';
-
-function preventDefault(event: React.MouseEvent) {
-  event.preventDefault();
-}
+import { CustomColumn, CustomTable } from '../components/Table';
 
 interface SecurityTransactionSummaryCum extends SecurityTransactionSummary {
   amountCum: number,
@@ -33,6 +23,63 @@ export function SecurityTransactionSummaryView() {
   const symbol = searchParams.get('securityId');
 
   const [selectedTransactionId, setSelectedTransactionId] = React.useState<number>(0);
+
+  const columns: CustomColumn<SecurityTransactionSummaryCum>[] = [
+    {
+      id: 'date',
+      label: 'Date',
+      align: 'left',
+      format: formatDate,
+    },
+    { id: 'type', label: 'Action' },
+    {
+      id: 'total',
+      label: 'Total',
+      align: 'right',
+      format: formatNumber,
+    },
+    {
+      id: 'value',
+      label: 'Value',
+      align: 'right',
+      format: formatNumber,
+    },
+    {
+      id: 'fee',
+      label: 'Fee',
+      align: 'right',
+      format: formatNumber,
+    },
+    {
+      id: 'tax',
+      label: 'Tax',
+      align: 'right',
+      format: formatNumber,
+    },
+    {
+      id: 'amount',
+      label: 'Amount',
+      align: 'right',
+      format: (value: number) => formatNumber(value, 4),
+    },
+    {
+      id: 'amountCum',
+      label: 'Cumulative Amount',
+      align: 'right',
+      format: (value: number) => formatNumber(value, 4),
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      components: [
+        (item: SecurityTransactionSummaryCum) => (
+          <Button color="primary" href="#" onClick={() => { handleOpen(); setSelectedTransactionId(item.id); }}>
+            Edit
+          </Button>
+        ),
+      ],
+    },
+  ];
 
   React.useEffect(() => {
     getSecurityTransactionDetailsS(symbol)
@@ -78,44 +125,14 @@ export function SecurityTransactionSummaryView() {
         </Paper>
       </Grid>
       <Grid item xs={12}>
-        <Title>Securities</Title>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Event</TableCell>
-              <TableCell>Date</TableCell>
-              <TableCell align="right">Total</TableCell>
-              <TableCell align="right">Value</TableCell>
-              <TableCell align="right">Fee</TableCell>
-              <TableCell align="right">Tax</TableCell>
-              <TableCell align="right">Ammount</TableCell>
-              <TableCell align="right">Saldo</TableCell>
-              <TableCell>Action</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {securityHistory?.map((row) => (
-              <TableRow key={`${row.id}-${row.type}`}>
-                <TableCell>{row.date.toLocaleDateString('de-CH')}</TableCell>
-                <TableCell>{row.type}</TableCell>
-                <TableCell align="right">{formatNumber(row.total)}</TableCell>
-                <TableCell align="right">{formatNumber(row.value)}</TableCell>
-                <TableCell align="right">{formatNumber(row.fee)}</TableCell>
-                <TableCell align="right">{formatNumber(row.tax)}</TableCell>
-                <TableCell align="right">{formatNumber(row.amount, 4)}</TableCell>
-                <TableCell align="right">{formatNumber(row.amountCum, 4)}</TableCell>
-                <TableCell>
-                  <Button color="primary" href="#" onClick={() => { handleOpen(); setSelectedTransactionId(row.id); }}>
-                    Edit
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <Link color="primary" href="#" onClick={preventDefault} sx={{ mt: 3 }}>
-          See more orders
-        </Link>
+        <CustomTable
+          maxHeight={window.innerHeight - 64 - 52 - 32 - 32 - 16 - 16 - 300 - 3 * 8}
+          columns={columns}
+          data={securityHistory}
+          dataKey="id"
+          activeKey=""
+          setActive={() => { }}
+        />
         <SecurityTransactionDialog open={open} transactionId={selectedTransactionId} handleClose={handleClose} />
       </Grid>
     </Grid>

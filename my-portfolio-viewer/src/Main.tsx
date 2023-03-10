@@ -28,6 +28,8 @@ import { Securities } from './dashboard/Securities';
 import { Dividends } from './dashboard/Dividends';
 import { AccountTransactionSummaryView } from './dashboard/AccountTransactionSummary';
 import { SecurityTransactionSummaryView } from './dashboard/SecurityTransactionSummaryView';
+import { Diversification } from './dashboard/Diversification';
+import { Diversification2 } from './dashboard/Diversification2';
 
 const drawerWidth = 240;
 
@@ -141,7 +143,17 @@ function Main() {
               noWrap
               sx={{ flexGrow: 1 }}
             >
-              Dashboard
+              <Routes>
+                <Route path="/" element="Dashboard" />
+                <Route path="/accounts" element="Accounts" />
+                <Route path="/accounts/history" element="Account - Transaction history" />
+                <Route path="/securities" element="Securities" />
+                <Route path="/securities/history" element="Security - Transaction history" />
+                <Route path="/trades" element="Trades" />
+                <Route path="/dividends" element="Dividends" />
+                <Route path="/diversification" element="Diversification" />
+                <Route path="/diversification2" element="Diversification" />
+              </Routes>
             </Typography>
             <IconButton color="inherit">
               <Badge badgeContent={4} color="secondary">
@@ -184,7 +196,14 @@ function Main() {
           <Toolbar />
           <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Grid item xs={12}>
-              <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+              <Paper
+                sx={{
+                  p: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '1000px',
+                }}
+              >
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/accounts" element={<Accounts />} />
@@ -193,6 +212,8 @@ function Main() {
                   <Route path="/securities/history" element={<SecurityTransactionSummaryView />} />
                   <Route path="/trades" element={<Trades />} />
                   <Route path="/dividends" element={<Dividends />} />
+                  <Route path="/diversification" element={<Diversification />} />
+                  <Route path="/diversification2" element={<Diversification2 />} />
                 </Routes>
               </Paper>
             </Grid>

@@ -5,6 +5,7 @@ SELECT
 FROM (
 	SELECT
 		a.user_id,
+        sts.account_id,
 		s.id,
 		s.name_long AS name,
 		s.symbol,
@@ -31,7 +32,7 @@ FROM (
 			GROUP BY security_id
 		) AS sph_sorted ON sph_sorted.security_id = sph.security_id and sph_sorted.max_date = sph.date
 	) as sph_hi on sph_hi.security_id = s.id
-	WHERE sts.type IN ('buy', 'sell', 'posting')
-	GROUP BY a.user_id, s.id, s.name_long, s.symbol, s.quote_type, s.currency
+	WHERE sts.type IN ('buy', 'sell', 'posting','vesting')
+	GROUP BY a.user_id, sts.account_id, s.id, s.name_long, s.symbol, s.quote_type, s.currency
 ) AS t
 ORDER BY t.symbol

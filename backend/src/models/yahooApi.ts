@@ -5,13 +5,13 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
   const response = await yahooFinance.quote(symbol);
   const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: [ "assetProfile" ] });
 
-  if (symbol === 'ABBN.SW') {
-    console.log('here we are');
-    // console.log(response);
-    // console.log('here we are');
-    // console.log(responseSummary);
-    console.log({...response, ...responseSummary});
-  }
+  // if (symbol === 'ABBN.SW') {
+  //   console.log('here we are');
+  //   // console.log(response);
+  //   // console.log('here we are');
+  //   // console.log(responseSummary);
+  //   console.log({...response, ...responseSummary});
+  // }
 
   const security: Security = {
     id: -1,

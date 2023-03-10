@@ -53,6 +53,22 @@ export const mainListItems = (
         <ListItemText primary="Dividends" />
       </ListItemButton>
     </Link>
+    <Link component={RouterLink} to="/diversification">
+      <ListItemButton>
+        <ListItemIcon>
+          <ShowChartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Diversification" />
+      </ListItemButton>
+    </Link>
+    <Link component={RouterLink} to="/diversification2">
+      <ListItemButton>
+        <ListItemIcon>
+          <ShowChartIcon />
+        </ListItemIcon>
+        <ListItemText primary="Diversification2" />
+      </ListItemButton>
+    </Link>
   </>
 );
 

@@ -2,29 +2,18 @@ import * as React from 'react';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Link from '@mui/material/Link';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import {
-  SxProps,
-  TableContainer,
-  TableFooter,
-  Theme,
-} from '@mui/material';
 import { Trade } from '@backend/types/trade';
 import { Chart } from './Chart';
-import { Title } from './Title';
 import { getTrades } from '../types/service';
 import { formatDate, formatNumber, formatPercentage } from '../data/formatting';
-
-function preventDefault(event: React.MouseEvent) {
-  event.preventDefault();
-}
+import { CustomColumn, CustomTable } from '../components/Table';
 
 interface TradesProps {
-  selectSymbol?: (symbol: string) => void,
+  selectSymbol?: (symbol: string, accountId: number) => void,
+}
+
+interface TradesByAccount extends Trade {
+  dataKey: string,
 }
 
 const styleStickyHeaderColumn = {
@@ -32,23 +21,12 @@ const styleStickyHeaderColumn = {
   left: 0,
   // boxShadow: '5px 2px 5px grey',
   // borderRight: '2px solid black',
-  zIndex: 1000,
+  zIndex: 11,
   bgcolor: 'background.paper',
 };
-const styleStickyColumn = { ...styleStickyHeaderColumn, zIndex: 100 };
+const styleStickyColumn = { ...styleStickyHeaderColumn, zIndex: 10 };
 
-interface Column {
-  id: string,
-  label: string,
-  minWidth?: number,
-  align?: 'left' | 'right' | 'center',
-  format?: (value: number | Date | string) => string,
-  sxHeader?: SxProps<Theme>,
-  sxBody?: SxProps<Theme>,
-  style?: (trade: Trade) => React.CSSProperties,
-}
-
-const columns: readonly Column[] = [
+const columns: CustomColumn<TradesByAccount>[] = [
   {
     id: 'name',
     label: 'Name',
@@ -64,14 +42,14 @@ const columns: readonly Column[] = [
     label: 'P/L',
     align: 'right',
     format: formatNumber,
-    style: (trade: Trade) => ({ color: (trade.profitLoss > 0) ? 'green' : 'red' }),
+    style: (trade: TradesByAccount) => ({ color: (trade.profitLoss > 0) ? 'green' : 'red' }),
   },
   {
     id: 'profitLossPercentage',
     label: 'P/L (%)',
     align: 'right',
     format: formatPercentage,
-    style: (trade: Trade) => ({ color: (trade.profitLoss > 0) ? 'green' : 'red' }),
+    style: (trade: TradesByAccount) => ({ color: (trade.profitLoss > 0) ? 'green' : 'red' }),
   },
   {
     id: 'entryPrice',
@@ -99,123 +77,82 @@ const columns: readonly Column[] = [
   },
   { id: 'lastDate', label: 'Last Date', format: formatDate },
 ];
+const footerColumns = [
+  'name', 'currency', 'profitLoss', 'profitLossPercentage', 'entryPrice', 'entryPriceAll', 'exitPrice',
+];
 
 function TradesList({ selectSymbol }: TradesProps) {
   // const { selectSymbol } = props;
   const [symbol, setSymbol] = React.useState<string>('LOGN.SW');
-  const [trades, setTrades] = React.useState<Trade[] | null>(null);
+  const [accountId, setAccountId] = React.useState<number>(0);
+  const [trades, setTrades] = React.useState<TradesByAccount[] | null>(null);
+  const [footer, setFooter] = React.useState<TradesByAccount[] | null>(null);
 
   React.useEffect(() => {
     getTrades().then(
-      (result) => setTrades(result),
+      (newTrades) => {
+        const byAccount = newTrades.map((item: Trade) => ({ ...item, dataKey: `${item.symbol}-${item.accountId}` }));
+        setTrades(byAccount);
+
+        setFooter(
+          ['CHF', 'EUR', 'USD'].map((currency) => (
+            byAccount
+              .filter((row) => row.currency === currency)
+              .reduce(
+                (accumulator, row) => {
+                  accumulator.entryPrice += row.entryPrice;
+                  accumulator.entryPriceAll += row.entryPriceAll;
+                  accumulator.exitPrice += row.exitPrice;
+                  return accumulator;
+                },
+                {
+                  accountId: 0,
+                  name: 'Total',
+                  symbol: currency,
+                  quoteType: '',
+                  currency,
+                  entryPrice: 0,
+                  entryPriceAll: 0,
+                  amount: null,
+                  exitPrice: 0,
+                  lastPrice: 0,
+                  lastDate: null,
+                  profitLoss: 0,
+                  profitLossPercentage: 0,
+                } as TradesByAccount,
+              )
+          )).map((trade: TradesByAccount) => {
+            const updatedTrade: TradesByAccount = { ...trade };
+            updatedTrade.profitLoss = trade.exitPrice - trade.entryPriceAll;
+            updatedTrade.profitLossPercentage = 100 * (updatedTrade.profitLoss / trade.entryPriceAll);
+            return updatedTrade;
+          }),
+        );
+      },
     );
   }, []);
 
   React.useEffect(() => {
-    if (selectSymbol) { selectSymbol(symbol); }
-  }, [symbol]);
+    if (selectSymbol) { selectSymbol(symbol, accountId); }
+  }, [symbol, accountId]);
 
   return (
     <>
-      <Title>Trades</Title>
-      Show Portfolio History
       <Grid container flexDirection="row" justifyContent="center">
-        <Link href="#" onClick={() => selectSymbol('CHF')}>CHF</Link>
-        <Link href="#" onClick={() => selectSymbol('EUR')}>EUR</Link>
-        <Link href="#" onClick={() => selectSymbol('USD')}>USD</Link>
+        <Link href="#" onClick={() => selectSymbol('CHF', 0)}>CHF</Link>
+        <Link href="#" onClick={() => selectSymbol('EUR', 0)}>EUR</Link>
+        <Link href="#" onClick={() => selectSymbol('USD', 0)}>USD</Link>
       </Grid>
-      <TableContainer sx={{ maxHeight: 660 }}>
-        <Table stickyHeader size="small">
-          <TableHead>
-            <TableRow>
-              {
-                columns.map((column) => (
-                  <TableCell key={column.id} align={column.align} sx={column.sxHeader}>{column.label}</TableCell>
-                ))
-              }
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {trades?.sort((a, b) => a.symbol.localeCompare(b.symbol)).map((row) => (
-              <TableRow
-                hover
-                key={row.symbol}
-                onClick={() => setSymbol(row.symbol)}
-                sx={{ backgroundColor: symbol === row.symbol ? 'background.paper' : 'none' }}
-              >
-                {
-                  columns.map((column) => {
-                    const value = row[column.id];
-                    return (
-                      <TableCell
-                        key={column.id}
-                        align={column.align}
-                        sx={column.sxBody}
-                        style={column.style ? column.style(row) : {}}
-                      >
-                        {column.format ? column.format(value) : value}
-                      </TableCell>
-                    );
-                  })
-                }
-              </TableRow>
-            ))}
-          </TableBody>
-          <TableFooter>
-            {
-              ['CHF', 'EUR', 'USD'].map((currency) => (
-                <TableRow key={currency}>
-                  <TableCell>{currency}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell />
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.entryPrice, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.entryPriceAll, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.exitPrice, 0))
-                    }
-                  </TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.exitPrice - row.entryPriceAll, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(
-                        100 * (
-                          trades.filter((row) => row.currency === currency)
-                            .reduce((accumulator, row) => accumulator + row.exitPrice - row.entryPriceAll, 0)
-                          / trades.filter((row) => row.currency === currency)
-                            .reduce((accumulator, row) => accumulator + row.entryPriceAll, 0)
-                        ),
-                      )
-                    }
-                  </TableCell>
-                </TableRow>
-              ))
-            }
-          </TableFooter>
-        </Table>
-      </TableContainer>
-      <Link color="primary" href="#" onClick={preventDefault} sx={{ mt: 3 }}>
-        See more orders
-      </Link>
+      <CustomTable
+        maxHeight={window.innerHeight - 64 - 52 - 32 - 32 - 16 - 16 - 300 - 3 * 8 - 24}
+        columns={columns}
+        data={trades?.sort((a, b) => a.symbol.localeCompare(b.symbol))}
+        footerColumns={footerColumns}
+        footerData={footer}
+        dataKey="dataKey"
+        activeKey={`${symbol}-${accountId}`}
+        setActive={(item) => { setSymbol(item.symbol); setAccountId(item.accountId); }}
+      />
     </>
   );
 }
@@ -226,6 +163,7 @@ TradesList.defaultProps = {
 
 function Trades() {
   const [symbol, setSymbol] = React.useState('LOGN.SW');
+  const [accountId, setAccountId] = React.useState(0);
 
   return (
     <Grid container spacing={3}>
@@ -246,13 +184,15 @@ function Trades() {
             height: 300,
           }}
         >
-          <Chart symbol={symbol} />
+          <Chart symbol={symbol} accountId={accountId} />
         </Paper>
       </Grid>
       <Grid item xs={12}>
-        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
-          <TradesList selectSymbol={(symbolP: string) => { console.log(symbolP); setSymbol(symbolP); }} />
-        </Paper>
+        <TradesList
+          selectSymbol={(symbolP: string, accountIdP: number) => {
+            console.log(symbolP, accountId); setSymbol(symbolP); setAccountId(accountIdP);
+          }}
+        />
       </Grid>
     </Grid>
   );

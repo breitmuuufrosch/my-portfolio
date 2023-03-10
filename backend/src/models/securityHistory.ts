@@ -5,6 +5,7 @@ import { SecurityTransactionSummary } from '../types/security';
 
 export interface SecurityHistoryParams {
   userId: number,
+  accountId?: number,
   securityId?: number,
   type?: string,
 }
@@ -62,6 +63,9 @@ export const findAll = (params: SecurityHistoryParams): Promise<SecurityTransact
     }
     if (params.type) {
       filters.push('sts.type = :type');
+    }
+    if (params.accountId) {
+      filters.push('sts.account_id = :accountId');
     }
     queryString += `
     WHERE ${filters.join(' AND ')}

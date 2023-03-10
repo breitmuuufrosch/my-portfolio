@@ -9,7 +9,7 @@ import {
   Security,
   SecurityTransactionSummary,
 } from '@backend/types/security';
-import { Trade } from '@backend/types/trade';
+import { Trade, TradeDiversification } from '@backend/types/trade';
 import { Currency } from '@backend/types/currency';
 import { isoDate } from 'src/data/formatting';
 
@@ -67,8 +67,13 @@ export const getSecurityQuotes = async (
   )
 );
 
-export const getSecurityTransactionDetailsS = async (symbol: string): Promise<SecurityTransactionSummary[]> => (
-  (await getServiceData<SecurityTransactionSummary[]>(`http://localhost:3333/securities/${symbol}/transactions`))
+export const getSecurityTransactionDetailsS = async (
+  symbol: string,
+  accountId?: number,
+): Promise<SecurityTransactionSummary[]> => (
+  (await getServiceData<SecurityTransactionSummary[]>(
+    `http://localhost:3333/securities/${symbol}/transactions/${accountId ?? ''}`,
+  ))
     .map((sh: SecurityTransactionSummary) => ({ ...sh, date: new Date(sh.date) }))
 );
 
@@ -84,4 +89,8 @@ export const getPortfolioQuotes = async (
   getServiceData<PorftolioQuote[]>(
     `http://localhost:3333/histories/portfolios/${currency}?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
   )
+);
+
+export const getDiversification = async (): Promise<TradeDiversification[]> => (
+  getServiceData<TradeDiversification[]>('http://localhost:3333/trades/diversification')
 );

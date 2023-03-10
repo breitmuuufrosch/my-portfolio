@@ -14,7 +14,8 @@ function DashboardContent() {
   React.useEffect(() => {
     Promise.all([getTrades(), getAccountSummary()])
       .then(([tradesResult, accountsResult]) => {
-        const tradeSummary = getTotal(groupBy(tradesResult, 'currency'), 'exitPrice');
+        const activeTrades = tradesResult.filter((trade) => trade.amount > 0);
+        const tradeSummary = getTotal(groupBy(activeTrades, 'currency'), 'exitPrice');
         setTrades(tradeSummary);
 
         const accountSummary = getTotal(groupBy(accountsResult, 'currency'), 'balance');
