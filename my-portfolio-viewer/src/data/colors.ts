@@ -73,3 +73,14 @@ export const rgbToHex = (rgb: number[]) => {
 
 export const hexToHsl = (hex: string): number[] => rgbToHsl(hexToRgb(hex));
 export const hslToHex = (hsl: number[]): string => rgbToHex(hslToRgb(hsl));
+
+export const COLOR_SET1 = [
+  '#ff0000', '#ff8000', '#ffff00', '#80ff00', '#00ff00', '#00ff80', '#00ffff', '#0080ff', '#0000ff', '#8000ff',
+  '#ff00ff', '#ff0080',
+];
+export const COLOR_SET2 = [
+  '#b30000', '#7c1158', '#4421af', '#1a53ff', '#0d88e6', '#00b7c7', '#5ad45a', '#8be04e', '#ebdc78',
+];
+export const COLOR_SET3 = [
+  '#e60049', '#0bb4ff', '#50e991', '#e6d800', '#9b19f5', '#ffa300', '#dc0ab4', '#b3d4ff', '#00bfa0',
+];

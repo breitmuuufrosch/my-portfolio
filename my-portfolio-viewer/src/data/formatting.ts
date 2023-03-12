@@ -13,7 +13,9 @@ export const formatNumber = (value?: number, digits = 2): string => {
     return '-';
   }
 
-  return rounded.toLocaleString('de-CH', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return rounded
+    .toLocaleString('de-CH', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  // .replace(/[0-9]/g, '*');
 };
 
 export const formatPercentage = (value?: number, digits = 2): string => {

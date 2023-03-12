@@ -7,15 +7,113 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
+  Label,
 } from 'recharts';
 import { TradeDiversification } from '@backend/types/trade';
 import { getDiversification } from 'src/types/service';
+import {
+  COLOR_SET3,
+  hexToHsl,
+  hexToRgb,
+  hslToHex,
+} from 'src/data/colors';
 import { Title } from './Title';
-import { formatNumber } from '../data/formatting';
+import { formatNumber, formatPercentage } from '../data/formatting';
+
+interface IPieItem {
+  parent: IPieItem,
+  children: IPieItem[],
+  label: string,
+  value: number,
+  currency: string,
+  color: string,
+  start: number,
+  end: number,
+  percentage: () => number,
+  addChild: (item: IPieItem) => void,
+  sort: () => void,
+  setColor: (v: string) => void,
+  setAngles: (s: number, e: number) => void,
+}
+
+const PieItem = (
+  props: { parent: IPieItem, label: string, value: number, currency: string, color: string },
+): IPieItem => {
+  const {
+    parent,
+    label,
+    currency,
+    color,
+    value,
+  } = props;
+  const children = [];
+
+  const sort = (): void => {
+    children.sort((a: IPieItem, b: IPieItem) => b.value - a.value);
+    children.forEach((item) => { item.sort(); });
+    children.reduce((acc, curr: IPieItem) => {
+      const e = acc + curr.percentage();
+      curr.setAngles(acc, e);
+      return e;
+    }, 0);
+  };
+
+  const item = {
+    parent,
+    children,
+    label,
+    value,
+    currency,
+    color,
+    start: 0,
+    end: 0,
+    percentage: (): number => (item.parent ? item.value / item.parent.value : 1),
+    addChild: (child: IPieItem): void => {
+      item.value += child.value;
+      item.children.push(child);
+
+      let updateParent = item.parent;
+      while (updateParent) {
+        updateParent.value += child.value;
+        updateParent = updateParent.parent;
+      }
+    },
+    sort,
+    setColor: (v: string) => { item.color = v; },
+    setAngles: (s: number, e: number) => { item.start = s; item.end = e; },
+  };
+
+  if (parent) {
+    parent.addChild(item);
+  }
+
+  return item;
+};
 
 function CustomTooltip({ active, payload }: any) {
   if (active && payload && payload.length) {
-    console.log(payload[0]);
+    const finalPositions: IPieItem[] = [];
+    const overflowPosiitons: IPieItem[] = [];
+    payload[0].payload.children?.forEach((item: IPieItem) => {
+      if (finalPositions.length < 5) {
+        finalPositions.push(item);
+      } else {
+        overflowPosiitons.push(item);
+      }
+    });
+
+    const summary = ['CHF', 'EUR', 'USD'].map((currency: string) => (
+      overflowPosiitons
+        .filter((row) => row.currency === currency)
+        .reduce((acc, row) => {
+          acc.value += row.value;
+          return acc;
+        }, PieItem({
+          parent: undefined, label: currency, value: 0, currency, color: '',
+        }))));
+
+    finalPositions.push(...summary.filter((item) => item.value > 0));
+
     return (
       <Grid
         container
@@ -29,9 +127,9 @@ function CustomTooltip({ active, payload }: any) {
         <Grid item>{payload[0].name}</Grid>
         <Grid item sx={{ pb: 2 }}>{`Value: ${formatNumber(payload[0].value)}`}</Grid>
         {
-          payload[0].payload.positions.map((position: Position) => (
-            <Grid item key={position.symbol}>
-              {`${position.name} ${formatNumber(position.value)} ${position.currency}`}
+          finalPositions.map((position: IPieItem) => (
+            <Grid item key={`${position.label}-${position.currency}`}>
+              {`${position.label} ${formatNumber(position.value)} ${position.currency}`}
             </Grid>
           ))
         }
@@ -42,20 +140,6 @@ function CustomTooltip({ active, payload }: any) {
   return null;
 }
 
-interface Position {
-  name: string,
-  symbol: string
-  value: number,
-  currency: string,
-}
-
-interface PieItem {
-  label: string,
-  value: number,
-  color: string,
-  positions: Position[],
-}
-
 enum ViewMode {
   QUOTE_TYPE = 'quoteType',
   SECTOR = 'sector',
@@ -63,87 +147,96 @@ enum ViewMode {
   REAL_ESTATE = 'realEstate',
   ACCOUNT = 'account',
   DEPOT = 'depot',
+  CURRENCY = 'currency',
 }
+
+// const sortPieItems = (items: PieItem[]) => {
+//   items.sort((a: PieItem, b: PieItem) => b.value - a.value);
+//   items.forEach((item: PieItem) => sortPieItems(item.children));
+// }
 
 function Chart() {
   const theme = useTheme();
 
   const [tradeDiversification, setTradeDiversification] = React.useState<TradeDiversification[] | null>(null);
-  const [pieData, setPieData] = React.useState<PieItem[] | null>(null);
+  // const [pieData, setPieData] = React.useState<PieItem[] | null>(null);
+  const [pieRoot, setPieRoot] = React.useState<IPieItem | null>(null);
   const [viewMode, setViewMode] = React.useState<ViewMode>(ViewMode.QUOTE_TYPE);
 
   const styleCenterText = { fontSize: 26, fill: theme.palette.text.secondary };
-
-  // const COLORS = [
-  //   '#003f5c',
-  //   '#2f4b7c',
-  //   '#665191',
-  //   '#a05195',
-  //   '#d45087',
-  //   '#f95d6a',
-  //   '#ff7c43',
-  //   '#ffa600',
-  // ];
-
-  const COLORS = [
-    '#ff0000',
-    '#ff8000',
-    '#ffff00',
-    '#80ff00',
-    '#00ff00',
-    '#00ff80',
-    '#00ffff',
-    '#0080ff',
-    '#0000ff',
-    '#8000ff',
-    '#ff00ff',
-    '#ff0080',
-  ];
 
   const updatePieData = () => {
     if (tradeDiversification === null) {
       return;
     }
 
-    const output: PieItem[] = [];
+    const root = PieItem({
+      parent: undefined, label: 'all', value: 0, currency: '-', color: '',
+    });
+    // const output: IPieItem[] = [];
 
     tradeDiversification.forEach((item: TradeDiversification) => {
-      if (item[viewMode] === null) {
+      const value = item[viewMode];
+      const groupValue = viewMode === ViewMode.ACCOUNT ? value.split('(')[0].trim() : value;
+      if (value === null) {
         return;
       }
-      const existing = output.filter((v) => v.label === item[viewMode]);
+      const existing = root.children.filter((v) => v.label === groupValue);
       if (existing.length) {
-        const existingIndex = output.indexOf(existing[0]);
-        output[existingIndex].value += item.exitPrice;
-        output[existingIndex].positions.push({
-          symbol: item.symbol,
-          name: item.name,
-          value: item.exitPrice,
-          currency: item.currency,
+        const existingIndex = root.children.indexOf(existing[0]);
+        const parent = root.children[existingIndex];
+        PieItem({
+          parent, label: item.name, value: item.exitPrice, currency: item.currency, color: '',
         });
       } else {
-        console.log(Math.floor(Math.random() * 16777215).toString(16));
-        output.push({
-          label: item[viewMode],
-          value: item.exitPrice,
-          color: Math.floor(Math.random() * 16777215).toString(16),
-          positions: [{
-            symbol: item.symbol,
-            name: item.name,
-            value: item.exitPrice,
-            currency: item.currency,
-          }],
+        const parent = PieItem({
+          parent: root, label: groupValue, value: 0, currency: '', color: '',
+        });
+        PieItem({
+          parent, label: item.name, value: item.exitPrice, currency: item.currency, color: '',
         });
       }
     });
 
-    output.sort((a: PieItem, b: PieItem) => a.value - b.value);
-    output.forEach((item) => {
-      item.positions.sort((a: Position, b: Position) => b.value - a.value);
-    });
+    root.sort();
+    root.children.forEach((item, index) => {
+      const color = COLOR_SET3[index % COLOR_SET3.length];
+      item.setColor(color);
 
-    setPieData(output);
-    console.log(output.reduce((a, c) => a + c.value, 0));
+      item.children.forEach((child, childIndex) => {
+        const newColor = hexToHsl(color);
+        newColor[2] += 0.1 + (childIndex + 1) * ((0.7 - newColor[2]) / item.children.length);
+        child.setColor(hslToHex(newColor));
+      });
+    });
+    // const colored = output.map((item, index) => {
+    //   const color = COLOR_SET3[index % COLOR_SET3.length];
+
+    //   return {
+    //     ...item,
+    //     color,
+    //     children: item.children.map((child, childIndex) => {
+    //       const newColor = hexToHsl(color);
+    //       newColor[2] += 0.1 + (childIndex + 1) * ((0.7 - newColor[2]) / item.children.length);
+
+    //       return {
+    //         ...child,
+    //         color: hslToHex(newColor),
+    //       };
+    //     }),
+    //   };
+    // });
+
+    // colored.forEach((item) => {
+    //   const newItem = { ...item, parent: root };
+    //   root.value += newItem.value;
+    //   root.children.push(newItem);
+    // });
+
+    // const coloredDetails = colored?.reduce((prev, curr) => prev.concat(curr.children), [] as PieItem[]);
+
+    // setPieData(colored);
+    setPieRoot(root);
   };
 
   React.useEffect(() => {
@@ -156,6 +249,7 @@ function Chart() {
 
   const RADIAN = Math.PI / 180;
   const renderCustomizedLabel = ({
+    data,
     cx,
     cy,
     midAngle,
@@ -164,41 +258,77 @@ function Chart() {
     percent,
     index,
   }) => {
-    if (pieData === null) {
+    if (data === null) {
       return (<text />);
     }
-    const radius = 25 + innerRadius + (outerRadius - innerRadius);
-    // const radius = innerRadius + (outerRadius - innerRadius);
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const labelOffset = pieRoot?.children.reduce((prev, curr) => prev.concat(curr?.children), [] as IPieItem[]).length
+      ? 75 : 0;
+    const getPosition = (radius: number) => ({
+      x: cx + radius * Math.cos(-midAngle * RADIAN),
+      y: cy + radius * Math.sin(-midAngle * RADIAN),
+    });
+    const innerPos = getPosition(innerRadius + 0.5 * (outerRadius - innerRadius));
+    // const outerPos = getPosition(labelOffset + 25 + innerRadius + (outerRadius - innerRadius));
+
+    const sin = Math.sin(-RADIAN * midAngle);
+    const cos = Math.cos(-RADIAN * midAngle);
+    const sx = cx + (outerRadius + 10) * cos;
+    const sy = cy + (outerRadius + 10) * sin;
+    const mx = cx + (outerRadius + labelOffset + 30) * cos;
+    const my = cy + (outerRadius + labelOffset + 30) * sin;
+    const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+    const ey = my;
+    const outerPos = { x: ex, y: ey };
+    const leftRight = cos >= 0 ? 1 : -1;
+    const textAnchor = cos >= 0 ? 'start' : 'end';
+
+    const hex = data[index].color;
+    const rgb = hexToRgb(hex);
+    const luminance = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
 
     return (
       <>
         <text
-          x={x}
-          y={y - 10}
-          fill={COLORS[index % COLORS.length]}
-          textAnchor={x > cx ? 'start' : 'end'}
+          x={innerPos.x}
+          y={innerPos.y}
+          fill={luminance < 0.5 ? 'white' : 'black'}
+          textAnchor="middle"
+          // textAnchor={innerPos.x > cx ? 'start' : 'end'}
           dominantBaseline="central"
+          style={{ pointerEvents: 'none' }}
         >
-          {pieData[index].label}
+          {`${formatPercentage(percent * 100, 0)}`}
         </text>
+        <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={hex} fill="none" />
+        <circle cx={ex} cy={ey} r={2} fill={hex} stroke="none" />
         <text
-          x={x}
-          y={y + 10}
-          fill={COLORS[index % COLORS.length]}
-          textAnchor={x > cx ? 'start' : 'end'}
+          x={ex + leftRight * 12}
+          y={outerPos.y}
+          // fill={COLORS[index % COLORS.length]}
+          fill={hex}
+          textAnchor={textAnchor}
           dominantBaseline="central"
         >
-          {`(${formatNumber(pieData[index].value)} / ${(percent * 100).toFixed(0)}%)`}
+          {data[index].label}
         </text>
+        {/* <text
+          x={ex + leftRight * 12}
+          y={outerPos.y}
+          dy={18}
+          // fill={COLORS[index % COLORS.length]}
+          fill={data[index].color}
+          textAnchor={textAnchor}
+          dominantBaseline="central"
+        >
+          {`(${formatNumber(data[index].value)} / ${(percent * 100).toFixed(0)}%)`}
+        </text> */}
       </>
     );
   };
 
-  console.log(pieData);
+  const renderCustomizedLabelInner = (props) => renderCustomizedLabel({ ...props, data: pieRoot.children });
 
-  if (pieData === null) {
+  if (pieRoot === null) {
     return (null);
   }
 
@@ -227,70 +357,98 @@ function Chart() {
           </Grid>
         </Grid>
       </Grid>
-      <ResponsiveContainer>
-        <>
-          {/* <ComposedChart
-          data={tradeDiversification}
-          margin={{
-            top: 16,
-            right: 0,
-            bottom: 0,
-            left: 24,
-          }}
-        > */}
-          <PieChart width={1000} height={750}>
-            {/* <Legend layout="vertical" verticalAlign="bottom" align="center" /> */}
-            {/* <Legend layout="vertical" verticalAlign="top" align="right" wrapperStyle={{ paddingLeft: 15 }} /> */}
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="label"
-              cx="50%"
-              cy="50%"
-              innerRadius={150}
-              outerRadius={250}
-              label={renderCustomizedLabel}
-            >
-              {
-                pieData.map((entry, index) => (
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart width={2000} height={600}>
+          <Pie
+            data={pieRoot?.children}
+            dataKey="value"
+            nameKey="label"
+            cx="50%"
+            cy="50%"
+            innerRadius={100}
+            outerRadius={175}
+            label={renderCustomizedLabelInner}
+            onClick={(_, index) => {
+              if (pieRoot.children[index].children.length) {
+                setPieRoot(pieRoot.children[index]);
+              }
+            }}
+          >
+            {
+              pieRoot?.children.map((entry) => (
+                <Cell
+                  key={entry.label}
+                  fill={entry.color}
+                />
+              ))
+            }
+            <Label
+              value="Total"
+              position="centerBottom"
+              style={{ transform: 'translateY(-15px)', userSelect: 'none' }}
+              pointerEvents="none"
+            // style={styleCenterText}
+            />
+            <Label
+              value={formatNumber(pieRoot.children?.reduce((acc: number, curr: IPieItem) => acc + curr.value, 0))}
+              position="centerTop"
+              style={{ ...styleCenterText, userSelect: 'none' }}
+              onClick={() => {
+                if (pieRoot.parent) {
+                  setPieRoot(pieRoot.parent);
+                }
+              }}
+            />
+          </Pie>
+          {
+            pieRoot?.children.map((item) => (
+              <Pie
+                key={item.label}
+                data={item.children}
+                dataKey="value"
+                nameKey="label"
+                cx="50%"
+                cy="50%"
+                innerRadius={175}
+                outerRadius={250}
+                label={false}
+                startAngle={item.start * 360}
+                endAngle={item.end * 360}
+              >
+                {
+                  item.children.map((entry) => (
+                    <Cell
+                      key={entry.label}
+                      fill={entry.color}
+                    />
+                  ))
+                }
+              </Pie>
+            ))
+          }
+          {/* <Pie
+            data={pieRoot?.children.reduce((prev, curr) => prev.concat(curr?.children), [] as IPieItem[]) ?? null}
+            dataKey="value"
+            nameKey="label"
+            cx="50%"
+            cy="50%"
+            innerRadius={175}
+            outerRadius={250}
+            label={false}
+          >
+            {
+              pieRoot?.children
+                .reduce((prev, curr) => prev.concat(curr?.children), [] as IPieItem[])
+                .map((entry) => (
                   <Cell
                     key={entry.label}
-                    fill={COLORS[index % COLORS.length]}
-                  // fill={`#${entry.color}`}
+                    fill={entry.color}
                   />
                 ))
-              }
-            </Pie>
-            <Pie
-              data={pieData}
-              dataKey="value"
-              nameKey="label"
-              cx="50%"
-              cy="50%"
-              innerRadius={150}
-              outerRadius={250}
-              label={renderCustomizedLabel}
-            >
-              {
-                pieData.map((entry, index) => (
-                  <Cell
-                    key={entry.label}
-                    fill={COLORS[index % COLORS.length]}
-                  // fill={`#${entry.color}`}
-                  />
-                ))
-              }
-            </Pie>
-            <text x={1000 / 2} y={750 / 2 - 30} textAnchor="middle" dominantBaseline="middle" style={styleCenterText}>
-              Total
-            </text>
-            <text x={1000 / 2} y={750 / 2} textAnchor="middle" dominantBaseline="middle" style={styleCenterText}>
-              {formatNumber(pieData.reduce((acc: number, curr: PieItem) => acc + curr.value, 0))}
-            </text>
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
-          </PieChart>
-        </>
-        {/* </ComposedChart> */}
+            }
+          </Pie> */}
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
+        </PieChart>
       </ResponsiveContainer>
     </>
   );

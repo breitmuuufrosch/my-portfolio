@@ -30,7 +30,7 @@ export function Securities() {
   }, []);
 
   return (
-    <Grid>
+    <Grid style={{ height: '100%' }}>
       <CustomTable
         columns={columns}
         data={securities?.sort((a, b) => a.symbol.localeCompare(b.symbol))}

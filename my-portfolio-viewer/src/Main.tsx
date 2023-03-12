@@ -29,7 +29,6 @@ import { Dividends } from './dashboard/Dividends';
 import { AccountTransactionSummaryView } from './dashboard/AccountTransactionSummary';
 import { SecurityTransactionSummaryView } from './dashboard/SecurityTransactionSummaryView';
 import { Diversification } from './dashboard/Diversification';
-import { Diversification2 } from './dashboard/Diversification2';
 
 const drawerWidth = 240;
 
@@ -152,7 +151,6 @@ function Main() {
                 <Route path="/trades" element="Trades" />
                 <Route path="/dividends" element="Dividends" />
                 <Route path="/diversification" element="Diversification" />
-                <Route path="/diversification2" element="Diversification" />
               </Routes>
             </Typography>
             <IconButton color="inherit">
@@ -201,7 +199,7 @@ function Main() {
                   p: 2,
                   display: 'flex',
                   flexDirection: 'column',
-                  height: '1000px',
+                  height: window.innerHeight - 64 - 52 - 32 - 32,
                 }}
               >
                 <Routes>
@@ -213,7 +211,6 @@ function Main() {
                   <Route path="/trades" element={<Trades />} />
                   <Route path="/dividends" element={<Dividends />} />
                   <Route path="/diversification" element={<Diversification />} />
-                  <Route path="/diversification2" element={<Diversification2 />} />
                 </Routes>
               </Paper>
             </Grid>
