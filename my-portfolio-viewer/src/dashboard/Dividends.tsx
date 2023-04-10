@@ -6,9 +6,8 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import { SecurityTransaction } from '@backend/types/security';
-import { Title } from './Title';
-import { getAccountHistoryByType } from '../types/service';
+import { SecurityTransaction, SecurityTransactionType } from '@backend/types/security';
+import { getAccountHistoryByType, getDividends } from '../types/service';
 import { formatNumber } from '../data/formatting';
 
 function range(low: number, high: number) {
@@ -47,6 +46,7 @@ const data = [
   { queries: ['buy'], property: 'total', text: 'invested' },
   { queries: [''], property: 'fee', text: 'fee' },
   { queries: [''], property: 'tax', text: 'tax' },
+  { queries: ['planned'], property: 'total', text: 'dividend (planned)' },
 ];
 
 export function Dividends() {
@@ -61,17 +61,40 @@ export function Dividends() {
     const maxValue = new Date();
     setDateRange(range(minValue.getFullYear(), maxValue.getFullYear()));
 
+    const g = groupByDate(newTransactions);
+    console.log(g);
+    console.log(g.find((i) => i.date === `${2023}-${2}`)?.dividends.filter((d) => d.currency === 'USD'));
     setTransactions(groupByDate(newTransactions));
   };
 
   React.useEffect(() => {
-    const promises = types.map((type) => getAccountHistoryByType(type));
-    console.log('update it', types, promises);
+    if (types[0] === 'planned') {
+      getDividends()
+        .then((result) => {
+          const newTransactions = result.filter((item) => item.payDividendDate).map((item) => ({
+            securityId: 0,
+            symbol: item.symbol,
+            date: new Date(item.payDividendDate),
+            type: 'dividend' as SecurityTransactionType,
+            accountId: 0,
+            currency: item.currency,
+            price: item.total,
+            amount: 0,
+            total: item.total,
+            value: item.total,
+            fee: 0,
+            tax: 0,
+          }));
+          updateTransactions(newTransactions.filter((d) => d.date > new Date()));
+        });
+    } else {
+      const promises = types.map((type) => getAccountHistoryByType(type));
 
-    Promise.all(promises)
-      .then((results) => {
-        updateTransactions([].concat(...results));
-      });
+      Promise.all(promises)
+        .then((results) => {
+          updateTransactions([].concat(...results));
+        });
+    }
   }, [types]);
 
   const renderYear = (currency: string, year: number) => (
@@ -130,7 +153,6 @@ export function Dividends() {
 
   return (
     <>
-      <Title>Dividends</Title>
       <Box
         sx={{
           display: 'flex',

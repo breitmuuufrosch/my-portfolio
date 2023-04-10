@@ -3,7 +3,7 @@ import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityHistory';
 import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
-import { PorftolioQuote, Security, SecurityTransaction, SecurityPrice } from '../types/security';
+import { PorftolioQuote, Security, SecurityTransaction, SecurityPrice, DividendInfo } from '../types/security';
 import { Trade } from '../types/trade';
 import { transactionRouter } from './security/transactionRouter';
 
@@ -12,38 +12,34 @@ const securityRouter = express.Router();
 securityRouter.use('/transaction', transactionRouter);
 
 securityRouter.get('/dividends', async (req: Request, res: Response) => {
-  type TradeInfo = [string, number];
+  type TradeInfo = [string, number, string];
   const userId = Number(req.headers['x-user-id']);
 
-  interface DividendInfo {
-    symbol: string, total: number, exDividendDate?: Date, payDividendDate?: Date,
-  }
-
   tradeModel.findAll(userId)
-    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount]))
+    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount, trade.currency]))
     .then((securities: TradeInfo[]) => {
       const allDividends = securities.map((trade: TradeInfo) => (
         new Promise<DividendInfo>((resolve) => {
           yahooFinance.getDividends(trade[0])
             .then((divResult) => {
               if (Number.isNaN(divResult.dividendRate) === false) {
-                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1], exDividendDate: divResult.exDividendDate, payDividendDate: divResult.dividendDate });
+                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1], exDividendDate: divResult.exDividendDate, payDividendDate: divResult.dividendDate, currency: divResult.currencty });
               } else {
-                resolve({ symbol: trade[0], total: 0 });
+                resolve({ symbol: trade[0], total: 0, currency: trade[2] });
               }
             })
-            .catch(() => resolve({ symbol: trade[0], total: 0 }));
+            .catch(() => resolve(undefined));
         })
       ));
 
       Promise.all(allDividends)
         .then((divResult) => {
           let total = 0;
-          divResult.forEach((dividend) => {
+          divResult.filter((item) => item && !Number.isNaN(item.total)).forEach((dividend) => {
             total += Number.isNaN(dividend.total) ? 0 : dividend.total;
           });
-
-          res.status(200).json({ all: divResult, total });
+          console.log(divResult);
+          res.status(200).json(divResult.filter((item) => item && !Number.isNaN(item.total)));
         })
         .catch((err: Error) => { throw err; });
     })

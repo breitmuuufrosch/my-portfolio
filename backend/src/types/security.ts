@@ -61,6 +61,7 @@ export interface SecurityTransaction {
   currency: string,
   price: number,
   amount: number,
+  total: number,
   value: number,
   fee: number,
   tax: number,
@@ -82,3 +83,11 @@ export const transactionTotal = (transaction: SecurityTransaction) => {
 
   return transaction.value - transaction.fee - transaction.tax;
 };
+
+export interface DividendInfo {
+  symbol: string,
+  total: number,
+  currency: string,
+  exDividendDate?: Date,
+  payDividendDate?: Date,
+}

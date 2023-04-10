@@ -3,8 +3,9 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Link from '@mui/material/Link';
 import { Trade } from '@backend/types/trade';
+import { Depot } from '@backend/types/account';
 import { Chart } from './Chart';
-import { getTrades } from '../types/service';
+import { getDepots, getTrades } from '../types/service';
 import { formatDate, formatNumber, formatPercentage } from '../data/formatting';
 import { CustomColumn, CustomTable } from '../components/Table';
 
@@ -85,68 +86,111 @@ function TradesList({ selectSymbol }: TradesProps) {
   // const { selectSymbol } = props;
   const [symbol, setSymbol] = React.useState<string>('LOGN.SW');
   const [accountId, setAccountId] = React.useState<number>(0);
+  const [currencyId, setCurrencyId] = React.useState<string>('');
+  const [depotId, setDepotId] = React.useState<number>(0);
+  const [depots, setDepots] = React.useState<Depot[]>(null);
   const [trades, setTrades] = React.useState<TradesByAccount[] | null>(null);
+  const [filteredTrades, setFilteredTrades] = React.useState<TradesByAccount[] | null>(null);
   const [footer, setFooter] = React.useState<TradesByAccount[] | null>(null);
 
   React.useEffect(() => {
     getTrades().then(
       (newTrades) => {
-        const byAccount = newTrades.map((item: Trade) => ({ ...item, dataKey: `${item.symbol}-${item.accountId}` }));
-        setTrades(byAccount);
-
-        setFooter(
-          ['CHF', 'EUR', 'USD'].map((currency) => (
-            byAccount
-              .filter((row) => row.currency === currency)
-              .reduce(
-                (accumulator, row) => {
-                  accumulator.entryPrice += row.entryPrice;
-                  accumulator.entryPriceAll += row.entryPriceAll;
-                  accumulator.exitPrice += row.exitPrice;
-                  return accumulator;
-                },
-                {
-                  accountId: 0,
-                  name: 'Total',
-                  symbol: currency,
-                  quoteType: '',
-                  currency,
-                  entryPrice: 0,
-                  entryPriceAll: 0,
-                  amount: null,
-                  exitPrice: 0,
-                  lastPrice: 0,
-                  lastDate: null,
-                  profitLoss: 0,
-                  profitLossPercentage: 0,
-                } as TradesByAccount,
-              )
-          )).map((trade: TradesByAccount) => {
-            const updatedTrade: TradesByAccount = { ...trade };
-            updatedTrade.profitLoss = trade.exitPrice - trade.entryPriceAll;
-            updatedTrade.profitLossPercentage = 100 * (updatedTrade.profitLoss / trade.entryPriceAll);
-            return updatedTrade;
-          }),
-        );
+        setTrades(newTrades.map((item: Trade) => ({ ...item, dataKey: `${item.symbol}-${item.accountId}` })));
       },
     );
+
+    getDepots().then(setDepots);
   }, []);
+
+  React.useEffect(() => {
+    if (trades === null) {
+      return;
+    }
+    const newFilteredTrades = trades.filter((t) => (
+      (depotId <= 0 || t.depotId === depotId) && (currencyId === '' || t.currency === currencyId)
+    ));
+    // const firstTrade = newFilteredTrades[0];
+    // setSymbol(firstTrade.symbol);
+    // selectSymbol(firstTrade.symbol, firstTrade.accountId);
+    setFilteredTrades(newFilteredTrades);
+    setFooter(
+      ['CHF', 'EUR', 'USD'].map((currency) => (
+        newFilteredTrades
+          .filter((row) => row.currency === currency)
+          .reduce(
+            (accumulator, row) => {
+              accumulator.entryPrice += row.entryPrice;
+              accumulator.entryPriceAll += row.entryPriceAll;
+              accumulator.exitPrice += row.exitPrice;
+              return accumulator;
+            },
+            {
+              accountId: 0,
+              name: 'Total',
+              symbol: currency,
+              quoteType: '',
+              currency,
+              entryPrice: 0,
+              entryPriceAll: 0,
+              amount: null,
+              exitPrice: 0,
+              lastPrice: 0,
+              lastDate: null,
+              profitLoss: 0,
+              profitLossPercentage: 0,
+            } as TradesByAccount,
+          )
+      )).filter((trade: TradesByAccount) => trade.entryPrice > 0)
+        .map((trade: TradesByAccount) => {
+          const updatedTrade: TradesByAccount = { ...trade };
+          updatedTrade.profitLoss = trade.exitPrice - trade.entryPriceAll;
+          updatedTrade.profitLossPercentage = 100 * (updatedTrade.profitLoss / trade.entryPriceAll);
+          return updatedTrade;
+        }),
+    );
+    console.log(filteredTrades);
+  }, [trades, depotId, currencyId]);
 
   React.useEffect(() => {
     if (selectSymbol) { selectSymbol(symbol, accountId); }
   }, [symbol, accountId]);
 
+  const currencySummary = (currency: string) => {
+    selectSymbol(currency, 0);
+    setCurrencyId(currency);
+  };
+
   return (
     <>
-      <Grid container flexDirection="row" justifyContent="center">
-        <Link href="#" onClick={() => selectSymbol('CHF', 0)}>CHF</Link>
-        <Link href="#" onClick={() => selectSymbol('EUR', 0)}>EUR</Link>
-        <Link href="#" onClick={() => selectSymbol('USD', 0)}>USD</Link>
+      <Grid container flexDirection="row" justifyContent="center" spacing={1}>
+        <Grid item>
+          <Link href="#" onClick={() => currencySummary('CHF')}>CHF</Link>
+        </Grid>
+        <Grid item>
+          <Link href="#" onClick={() => currencySummary('EUR')}>EUR</Link>
+        </Grid>
+        <Grid item>
+          <Link href="#" onClick={() => currencySummary('USD')}>USD</Link>
+        </Grid>
+        <Grid item>
+          <Link href="#" onClick={() => currencySummary('')}>All</Link>
+        </Grid>
+        {
+          depots?.map((a) => (
+            <Grid item key={a.id}>
+              <Link href="#" onClick={() => setDepotId(a.id)}>{a.name}</Link>
+            </Grid>
+          ))
+        }
+        <Grid item>
+          <Link href="#" onClick={() => setDepotId(0)}>All</Link>
+        </Grid>
       </Grid>
       <CustomTable
         maxHeight={window.innerHeight - 64 - 52 - 32 - 32 - 16 - 16 - 300 - 3 * 8 - 24}
         columns={columns}
-        data={trades?.sort((a, b) => a.symbol.localeCompare(b.symbol))}
+        data={filteredTrades?.sort((a, b) => a.symbol.localeCompare(b.symbol))}
         footerColumns={footerColumns}
         footerData={footer}
         dataKey="dataKey"

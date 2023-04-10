@@ -6,16 +6,21 @@ export const rounding = (value?: number, digits = 2): number => {
   return rounded;
 };
 
-export const formatNumber = (value?: number, digits = 2): string => {
+export const formatNumber = (value?: number, digits = 2, incognito = false): string => {
   const rounded = rounding(value, digits);
 
   if (Number.isNaN(rounded) || value === 0) {
     return '-';
   }
 
-  return rounded
+  let roundedString = rounded
     .toLocaleString('de-CH', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-  // .replace(/[0-9]/g, '*');
+
+  if (incognito) {
+    roundedString = roundedString.replace(/[0-9]/g, '*');
+  }
+
+  return roundedString;
 };
 
 export const formatPercentage = (value?: number, digits = 2): string => {

@@ -8,6 +8,7 @@ export const findAll = (userId: number): Promise<Trade[]> => {
   SELECT
     user_id,
     account_id,
+    depot_id,
     name,
     symbol,
     quote_type,
@@ -33,6 +34,7 @@ export const findAll = (userId: number): Promise<Trade[]> => {
         const rows = <RowDataPacket[]>result;
         const trades: Trade[] = rows.map((row) => ({
           accountId: row.account_id,
+          depotId: row.depot_id,
           name: row.name,
           symbol: row.symbol,
           currency: row.currency,

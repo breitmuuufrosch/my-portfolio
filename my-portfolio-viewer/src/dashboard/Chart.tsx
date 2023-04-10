@@ -161,7 +161,7 @@ function Chart(props: {
 
           if (currentDuration === 'Trade') {
             startDate = new Date(transactions.map((item) => item.date).reduce((pre, cur) => (pre > cur ? cur : pre)));
-            startDate = new Date(startDate.setDate(startDate.getDate() - 5));
+            startDate = new Date(startDate.setDate(startDate.getDate() - 1));
           }
 
           getSecurityQuotes(symbol, startDate, dates[1])

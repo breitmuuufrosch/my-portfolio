@@ -2,6 +2,11 @@ export type AccountTransactionType = (
   'payment' | 'payout' | 'transfer' | 'fee' | 'fee_refund' | 'tax' | 'tax_refund' | 'interest' | 'interest_charge'
 );
 
+export interface Depot {
+  id: number,
+  name: string,
+}
+
 export interface Account {
   id: number,
   name: string,

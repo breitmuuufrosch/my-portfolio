@@ -6,6 +6,7 @@ FROM (
 	SELECT
 		a.user_id,
         sts.account_id,
+        a.depot_id,
 		s.id,
 		s.name_long AS name,
 		s.symbol,
@@ -14,7 +15,7 @@ FROM (
 		SUM(CASE WHEN sts.amount > 0 THEN sts.value ELSE 0 END) AS entry_price,
 		SUM(sts.fee) AS entry_fee,
 		SUM(sts.tax) AS entry_tax,
-		CASE WHEN SUM(sts.amount) = 0 THEN SUM(CASE WHEN sts.amount > 0 THEN sts.value + sts.fee + sts.tax ELSE 0 END) ELSE SUM(sts.value + sts.fee + sts.tax) END AS entry_price_all,
+		CASE WHEN SUM(sts.amount) = 0 THEN SUM(CASE WHEN sts.amount > 0 THEN sts.value + sts.fee + sts.tax ELSE 0 END) ELSE SUM(SIGN(sts.amount) * sts.value + sts.fee + sts.tax) END AS entry_price_all,
 		SUM(sts.amount) AS amount,
 		sph_hi.close AS last_price,
 		sph_hi.date AS last_date,

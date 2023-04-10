@@ -8,6 +8,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   Label,
+  Legend,
 } from 'recharts';
 import { TradeDiversification } from '@backend/types/trade';
 import { getDiversification } from 'src/types/service';
@@ -162,6 +163,7 @@ function Chart() {
   // const [pieData, setPieData] = React.useState<PieItem[] | null>(null);
   const [pieRoot, setPieRoot] = React.useState<IPieItem | null>(null);
   const [viewMode, setViewMode] = React.useState<ViewMode>(ViewMode.QUOTE_TYPE);
+  const [hoverKey, setHoverKey] = React.useState<string>('');
 
   const styleCenterText = { fontSize: 26, fill: theme.palette.text.secondary };
 
@@ -328,6 +330,39 @@ function Chart() {
 
   const renderCustomizedLabelInner = (props) => renderCustomizedLabel({ ...props, data: pieRoot.children });
 
+  // const renderLegend = (props: any) => {
+  //   console.log(props);
+  //   const { payload } = props;
+
+  //   return (
+  //     <ul>
+  //       {
+  //         payload.map((entry) => (
+  //           <li key={`item-${entry.value}`}>{entry.value}</li>
+  //         ))
+  //       }
+  //     </ul>
+  //   );
+  // };
+
+  // renderLegend.propTypes = {
+  //   payload: propTypes.any,
+  // };
+
+  const handleLegendMouseEnter = (e) => {
+    console.log(e);
+    setHoverKey(e.value);
+    // if (!barProps[e.dataKey]) {
+    //   setBarProps({ ...barProps, hover: e.dataKey });
+    // }
+  };
+
+  const handleLegendMouseLeave = (e) => {
+    console.log(e);
+    setHoverKey(null);
+    // setBarProps({ ...barProps, hover: null });
+  };
+
   if (pieRoot === null) {
     return (null);
   }
@@ -379,6 +414,7 @@ function Chart() {
                 <Cell
                   key={entry.label}
                   fill={entry.color}
+                  fillOpacity={Number(hoverKey === entry.label || !hoverKey ? 1 : 0.4)}
                 />
               ))
             }
@@ -420,6 +456,7 @@ function Chart() {
                     <Cell
                       key={entry.label}
                       fill={entry.color}
+                      fillOpacity={Number(hoverKey === item.label || !hoverKey ? 1 : 0.4)}
                     />
                   ))
                 }
@@ -447,6 +484,22 @@ function Chart() {
                 ))
             }
           </Pie> */}
+          <Legend
+            layout="vertical"
+            verticalAlign="middle"
+            align="right"
+            // content={renderLegend}
+            payload={
+              pieRoot?.children.map((entry) => ({
+                value: entry.label,
+                type: 'square',
+                id: entry.label,
+                color: entry.color,
+              }))
+            }
+            onMouseOver={handleLegendMouseEnter}
+            onMouseOut={handleLegendMouseLeave}
+          />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
         </PieChart>
       </ResponsiveContainer>

@@ -8,6 +8,7 @@ import { currencyRouter } from './routes/currencyRouter';
 import { securityRouter } from './routes/securityRouter';
 import { tradeRouter } from './routes/tradeRouter';
 import { historyRouter } from './routes/historyRouter';
+import { depotRouter } from './routes/depotRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
@@ -68,6 +69,7 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json());
 app.use('/accounts', accountRouter);
 app.use('/currencies', currencyRouter);
+app.use('/depots', depotRouter);
 app.use('/securities', securityRouter);
 app.use('/trades', tradeRouter);
 app.use('/histories', historyRouter);

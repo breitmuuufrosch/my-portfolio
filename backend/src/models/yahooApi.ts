@@ -64,7 +64,7 @@ export const getDividends = async (symbol: string): Promise<any> => new Promise(
   yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] })
     .then((order) => {
       if (symbol === 'SCMN.SW') {
-        console.log(order);
+        // console.log(order);
       }
       const dividend = {
         symbol,

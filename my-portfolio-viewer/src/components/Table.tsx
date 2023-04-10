@@ -101,7 +101,7 @@ export function CustomTable<T>(props: {
                 <TableRow
                   hover
                   key={row[dataKey]}
-                  onClick={() => setActive(row[dataKey])}
+                  // onClick={() => setActive(row[dataKey])}
                   sx={{ backgroundColor: activeKey === row[dataKey] ? 'background.paper' : 'none' }}
                 >
                   {

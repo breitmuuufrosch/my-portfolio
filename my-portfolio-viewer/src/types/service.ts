@@ -3,8 +3,10 @@ import {
   AccountTransaction,
   AccountTransactionSummary,
   AccountSummary,
+  Depot,
 } from '@backend/types/account';
 import {
+  DividendInfo,
   PorftolioQuote,
   Security,
   SecurityTransactionSummary,
@@ -33,6 +35,10 @@ export const getCurrencies = async (): Promise<Currency[]> => (
 
 export const getAccounts = async (): Promise<Account[]> => (
   getServiceData<Account[]>('http://localhost:3333/accounts')
+);
+
+export const getDepots = async (): Promise<Depot[]> => (
+  getServiceData<Depot[]>('http://localhost:3333/depots')
 );
 
 export const getAccountSummary = async (): Promise<AccountSummary[]> => (
@@ -79,6 +85,10 @@ export const getSecurityTransactionDetailsS = async (
 
 export const getSecurityHistoryById = async (id: number): Promise<SecurityTransactionSummary> => (
   getServiceData<SecurityTransactionSummary>(`http://localhost:3333/histories/securities/${id}`)
+);
+
+export const getDividends = async (): Promise<DividendInfo[]> => (
+  getServiceData<DividendInfo[]>('http://localhost:3333/securities/dividends')
 );
 
 export const getPortfolioQuotes = async (

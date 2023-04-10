@@ -1,5 +1,6 @@
 export interface Trade {
   accountId: number,
+  depotId: number,
   name: string,
   symbol: string,
   quoteType: string,
