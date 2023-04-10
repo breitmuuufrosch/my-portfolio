@@ -6,7 +6,7 @@ const currencyRouter = express.Router();
 
 currencyRouter.get('/', async (req: Request, res: Response) => {
   currencyModel.findAll()
-    .then((currencies: Currency[]) => { res.status(200).json({ data: currencies }); })
+    .then((currencies: Currency[]) => { res.status(200).json(currencies); })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
 });
 
@@ -18,9 +18,9 @@ currencyRouter.post('/', async (req: Request, res: Response) => {
 });
 
 currencyRouter.get('/:symbol', async (req: Request, res: Response) => {
-  const symbol = req.params.symbol;
+  const { symbol } = req.params;
   currencyModel.findOne(symbol)
-    .then((currency: Currency) => { res.status(200).json({ data: currency }); })
+    .then((currency: Currency) => { res.status(200).json(currency); })
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 

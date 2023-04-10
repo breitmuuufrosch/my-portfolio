@@ -1,3 +1,5 @@
+export type SecurityTransactionType = 'buy' | 'sell' | 'posting' | 'dividend' | 'tax_refund';
+
 export interface Security {
   id: number,
   symbol: string,
@@ -8,9 +10,30 @@ export interface Security {
   isin?: string,
   valor?: string,
   info: { [id: string]: string },
+  holdings?: number,
+  source: string,
+  sourceUrl?: string,
 }
 
-export interface SecurityQuote {
+export interface SecurityTransactionSummary {
+  id: number,
+  type: SecurityTransactionType,
+  accountId: number,
+  accountTransactionId: number,
+  securityId: number,
+  symbol: string,
+  nameShort: string,
+  date: Date,
+  price: number,
+  amount: number,
+  currency: string,
+  total: number,
+  value: number,
+  fee: number,
+  tax: number,
+}
+
+export interface SecurityPrice {
   security_id: number,
   date: Date,
   high: number,
@@ -21,24 +44,50 @@ export interface SecurityQuote {
   volume: number,
 }
 
-export interface SecurityTransaction {
-  security_id: number,
-  symbol: string,
-  symbol_id: number,
+export interface PorftolioQuote {
   date: Date,
-  type: string,
-  acount_id: number,
+  value: number,
+  entryPrice: number,
+  close: number,
+  currency: string,
+}
+
+export interface SecurityTransaction {
+  securityId: number,
+  symbol: string,
+  date: Date,
+  type: SecurityTransactionType,
+  accountId: number,
   currency: string,
   price: number,
-  aboumt: number,
+  amount: number,
   total: number,
+  value: number,
   fee: number,
   tax: number,
 }
 
 export interface SecurityTransactionForeign extends SecurityTransaction {
-  total_chf: number,
-  fee_chf: number,
-  tax_chf: number,
-  account_id_chf: number,
+  exchangeToValue: number,
+  exchangeFromCurrency: string,
+  exchangeFromValue: number,
+  exchangeFromFee: number,
+  exchangeFromTax: number,
+  exchangeFromAccountId: number,
+}
+
+export const transactionTotal = (transaction: SecurityTransaction) => {
+  if (['buy', 'posting'].includes(transaction.type)) {
+    return transaction.value + transaction.fee + transaction.tax;
+  }
+
+  return transaction.value - transaction.fee - transaction.tax;
+};
+
+export interface DividendInfo {
+  symbol: string,
+  total: number,
+  currency: string,
+  exDividendDate?: Date,
+  payDividendDate?: Date,
 }

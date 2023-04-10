@@ -1,3 +1,5 @@
+import { getServiceData } from './service';
+
 export type Dividend = {
   symbol: string,
   total: number,
@@ -8,12 +10,6 @@ export type DividendTotal = {
   total: number,
 };
 
-export const getDividends = async <T>(): Promise<T> => {
-  const response = await fetch('http://localhost:3333/securities', {
-    method: 'GET',
-  });
-  const jsonResponse = await response.json();
-  console.info(jsonResponse);
-  return jsonResponse;
-  // return await JSON.stringify(jsonResponse);
-};
+export const getDividends = async (): Promise<DividendTotal> => (
+  getServiceData<DividendTotal>('http://localhost:3333/securities')
+);
