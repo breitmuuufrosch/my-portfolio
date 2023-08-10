@@ -1,7 +1,8 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../../models/security';
-import * as transactionModel from '../../models/transaction';
-import { Security, SecurityTransaction } from '../../types/security';
+import * as transactionModel from '../../models/securityTransaction';
+import { Security, SecurityTransaction, SecurityTransactionSummary } from '../../types/security';
+import { handleRequest } from '../../utils/server';
 
 const transactionRouter = express.Router();
 
@@ -9,9 +10,16 @@ transactionRouter.post('/', async (req: Request, res: Response) => {
   const transaction = req.body as SecurityTransaction;
 
   securityModel.findOne(transaction.symbol)
-    .then((security) => transactionModel.createTransaction({ ...transaction, securityId: security.id }))
+    .then((security) => transactionModel.create({ ...transaction, securityId: security.id }))
     .then((insertedIds) => { res.status(200).json({ data: insertedIds }); })
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+});
+
+transactionRouter.patch('/', async (req: Request, res: Response) => {
+  console.log(req);
+  const transaction = req.body as SecurityTransactionSummary;
+
+  handleRequest(res, transactionModel.update(transaction));
 });
 
 transactionRouter.post('/multiple', async (req: Request, res: Response) => {
@@ -22,14 +30,14 @@ transactionRouter.post('/multiple', async (req: Request, res: Response) => {
       .then((security: Security) => {
         const updatedSecurity = { ...item, securityId: security.id };
 
-        transactionModel.doesExistTransaction(updatedSecurity)
+        transactionModel.doesExist(updatedSecurity)
           .then((exists: boolean) => {
             if (exists) {
               resolve('duplicate');
               return;
             }
 
-            transactionModel.createTransaction(updatedSecurity)
+            transactionModel.create(updatedSecurity)
               .then(resolve)
               .catch(reject);
           });

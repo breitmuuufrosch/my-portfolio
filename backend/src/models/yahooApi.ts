@@ -2,10 +2,15 @@ import yahooFinance from 'yahoo-finance2';
 import { Security, SecurityPrice } from '../types/security';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
-  const response = await yahooFinance.quote(symbol);
-  const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: [ "assetProfile" ] });
 
-  // if (symbol === 'ABBN.SW') {
+  yahooFinance.quote(symbol)
+    .then((r) => console.log(r))
+    .catch((r) => console.log(r));
+  const response = await yahooFinance.quote(symbol);
+  const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: ["assetProfile"] });
+
+
+  // if (symbol === 'ZURN.SW') {
   //   console.log('here we are');
   //   // console.log(response);
   //   // console.log('here we are');
@@ -21,7 +26,7 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
     nameLong: response?.longName ?? '',
     currency: response?.currency || 'XXX',
     quoteType: response?.quoteType,
-    info: {...response, ...responseSummary},
+    info: { ...response, ...responseSummary },
     source: 'yahoo',
   };
   if (security.nameLong === '') {

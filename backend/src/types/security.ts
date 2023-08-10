@@ -15,24 +15,6 @@ export interface Security {
   sourceUrl?: string,
 }
 
-export interface SecurityTransactionSummary {
-  id: number,
-  type: SecurityTransactionType,
-  accountId: number,
-  accountTransactionId: number,
-  securityId: number,
-  symbol: string,
-  nameShort: string,
-  date: Date,
-  price: number,
-  amount: number,
-  currency: string,
-  total: number,
-  value: number,
-  fee: number,
-  tax: number,
-}
-
 export interface SecurityPrice {
   security_id: number,
   date: Date,
@@ -65,6 +47,14 @@ export interface SecurityTransaction {
   value: number,
   fee: number,
   tax: number,
+}
+
+export interface SecurityTransactionSummary extends SecurityTransaction {
+  id: number,
+  accountTransactionId?: number,
+  // exchangeAccountTransactionId: number,
+  moneyId: number,
+  nameShort: string,
 }
 
 export interface SecurityTransactionForeign extends SecurityTransaction {

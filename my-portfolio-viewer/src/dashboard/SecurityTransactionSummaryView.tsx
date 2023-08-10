@@ -5,7 +5,7 @@ import { Button } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { SecurityTransactionSummary } from '@backend/types/security';
 import { Chart } from './Chart';
-import { getSecurityTransactionDetailsS } from '../types/service';
+import { getSecurityTransactionDetails } from '../types/service';
 import { formatDate, formatNumber } from '../data/formatting';
 import { SecurityTransactionDialog } from '../dialogs/SecurityTransaction';
 import { CustomColumn, CustomTable } from '../components/Table';
@@ -73,7 +73,12 @@ export function SecurityTransactionSummaryView() {
       label: 'Actions',
       components: [
         (item: SecurityTransactionSummaryCum) => (
-          <Button color="primary" href="#" onClick={() => { handleOpen(); setSelectedTransactionId(item.id); }}>
+          <Button
+            key={item.id}
+            color="primary"
+            href="#"
+            onClick={() => { handleOpen(); setSelectedTransactionId(item.id); }}
+          >
             Edit
           </Button>
         ),
@@ -82,12 +87,15 @@ export function SecurityTransactionSummaryView() {
   ];
 
   React.useEffect(() => {
-    getSecurityTransactionDetailsS(symbol)
+    getSecurityTransactionDetails(symbol)
       .then(
         (result) => {
           let amountCum = 0;
           setSecurityHistory(
             result
+              .sort((a: SecurityTransactionSummary, b: SecurityTransactionSummary) => (
+                a.date.valueOf() - b.date.valueOf() || a.type.localeCompare(b.type)
+              ))
               .map((item) => {
                 amountCum += item.type === 'dividend' ? 0 : Number(item.amount);
                 return {
@@ -95,7 +103,10 @@ export function SecurityTransactionSummaryView() {
                   date: new Date(item.date),
                   amountCum,
                 };
-              }),
+              })
+              .sort((a: SecurityTransactionSummaryCum, b: SecurityTransactionSummaryCum) => (
+                b.date.valueOf() - a.date.valueOf() || b.type.localeCompare(a.type)
+              )),
           );
         },
       );
@@ -107,7 +118,6 @@ export function SecurityTransactionSummaryView() {
         item
         xs={12}
         sx={{
-          // position: '-webkit-sticky',
           position: 'sticky',
           bottom: 10,
           width: '100%',

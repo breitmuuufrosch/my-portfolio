@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import * as accountModel from '../models/account';
 import * as accountHistoryModel from '../models/accountHistory';
-import * as transactionModel from '../models/transaction';
+import * as accountTransactionModel from '../models/accountTransaction';
 import { Account, AccountTransaction, AccountTransactionSummary, AccountSummary } from '../types/account';
 import { handleRequest } from '../utils/server';
 
@@ -29,14 +29,14 @@ accountRouter.post('/multiple', async (req: Request, res: Response) => {
   const transactions = req.body as AccountTransaction[];
 
   Promise.all(transactions.map((item) => new Promise((resolve, reject) => {
-    transactionModel.doesExistAccountTransaction(item)
+    accountTransactionModel.doesExist(item)
       .then((exists: boolean) => {
         if (exists) {
           resolve('duplicate');
           return;
         }
 
-        transactionModel.createAccountTransaction(item)
+        accountTransactionModel.create(item)
           .then(resolve)
           .catch(reject);
       });
