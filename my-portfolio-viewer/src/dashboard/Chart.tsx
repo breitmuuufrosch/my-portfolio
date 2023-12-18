@@ -15,7 +15,7 @@ import {
   Scatter,
 } from 'recharts';
 import { PorftolioQuote, SecurityTransactionSummary } from '@backend/types/security';
-import { getPortfolioQuotes, getSecurityQuotes, getSecurityTransactionDetailsS } from 'src/types/service';
+import { getPortfolioQuotes, getSecurityQuotes, getSecurityTransactionDetails } from 'src/types/service';
 import { Title } from './Title';
 import {
   isoDate,
@@ -155,7 +155,7 @@ function Chart(props: {
           },
         );
     } else {
-      getSecurityTransactionDetailsS(symbol, accountId)
+      getSecurityTransactionDetails(symbol, accountId)
         .then((transactions: SecurityTransactionSummary[]) => {
           let startDate = dates[0];
 

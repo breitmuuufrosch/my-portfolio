@@ -29,6 +29,25 @@ export const getServiceData = async <T>(uri: string): Promise<T> => {
   return jsonResponse;
 };
 
+export const updateServiceData = async <T>(uri: string, data: T): Promise<T> => {
+  const replacer = function (key, value) {
+    return (this[key] instanceof Date) ? isoDate(this[key]) : value;
+  };
+
+  console.log(JSON.stringify(data, replacer));
+  const response = await fetch(uri, {
+    method: 'PATCH',
+    body: JSON.stringify(data, replacer),
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'x-user-id': `${USER_ID}`,
+    },
+  });
+  const jsonResponse = await response.json();
+  return jsonResponse;
+};
+
 export const getCurrencies = async (): Promise<Currency[]> => (
   getServiceData<Currency[]>('http://localhost:3333/currencies')
 );
@@ -73,7 +92,7 @@ export const getSecurityQuotes = async (
   )
 );
 
-export const getSecurityTransactionDetailsS = async (
+export const getSecurityTransactionDetails = async (
   symbol: string,
   accountId?: number,
 ): Promise<SecurityTransactionSummary[]> => (
@@ -85,6 +104,10 @@ export const getSecurityTransactionDetailsS = async (
 
 export const getSecurityHistoryById = async (id: number): Promise<SecurityTransactionSummary> => (
   getServiceData<SecurityTransactionSummary>(`http://localhost:3333/histories/securities/${id}`)
+);
+
+export const updateSecurityHistoryById = async (securityTransaction: SecurityTransactionSummary) => (
+  updateServiceData<SecurityTransactionSummary>('http://localhost:3333/securities/transaction', securityTransaction)
 );
 
 export const getDividends = async (): Promise<DividendInfo[]> => (

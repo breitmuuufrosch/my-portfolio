@@ -133,56 +133,6 @@ export function CustomTable<T>(props: {
             </TableFooter>
           )
         }
-        {/* <TableFooter>
-            {
-              ['CHF', 'EUR', 'USD'].map((currency) => (
-                <TableRow key={currency}>
-                  <TableCell>{currency}</TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell />
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.entryPrice, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.entryPriceAll, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.exitPrice, 0))
-                    }
-                  </TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell>
-                    {
-                      trades && formatNumber(trades.filter((row) => row.currency === currency)
-                        .reduce((accumulator, row) => accumulator + row.exitPrice - row.entryPriceAll, 0))
-                    }
-                  </TableCell>
-                  <TableCell>
-                    {
-                      trades && formatNumber(
-                        100 * (
-                          trades.filter((row) => row.currency === currency)
-                            .reduce((accumulator, row) => accumulator + row.exitPrice - row.entryPriceAll, 0)
-                          / trades.filter((row) => row.currency === currency)
-                            .reduce((accumulator, row) => accumulator + row.entryPriceAll, 0)
-                        ),
-                      )
-                    }
-                  </TableCell>
-                </TableRow>
-              ))
-            }
-          </TableFooter> */}
       </Table>
     </TableContainer>
   );

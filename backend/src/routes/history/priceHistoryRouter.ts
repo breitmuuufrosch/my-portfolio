@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../../models/security';
+import * as securityHistoryModel from '../../models/securityHistory'
 import * as yahooFinance from '../../models/yahooApi';
 import { Security, SecurityPrice } from '../../types/security';
 
@@ -19,7 +20,7 @@ priceHistoryRouter.post('/update-all', async (req: Request, res: Response) => {
               security_id: security.id,
             }));
 
-            securityModel.updateHistory(securityHistory)
+            securityHistoryModel.updateHistory(securityHistory)
               .then(() => resolve({ symbol: security.symbol, success: true }))
               .catch(() => reject(new Error(`${security.symbol} success: false`)));
           });

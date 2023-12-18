@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
-import * as securityModel from '../../models/security';
-import { PorftolioQuote } from '../../types/security';
+import * as securityHistoryModel from '../../models/securityHistory';
+import { handleRequest } from '../../utils/server';
 
 const portfolioHistoryRouter = express.Router();
 
@@ -10,11 +10,7 @@ portfolioHistoryRouter.get('/:currency', async (req: Request, res: Response) => 
   const endDate = new Date(String(req.query.end));
   const userId = Number(req.headers['x-user-id']);
 
-  securityModel.getPortfolioHistory(userId, currency, startDate, endDate)
-    .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes))
-    .catch((err: Error) => {
-      res.status(500).json({ message: err.message });
-    });
+  handleRequest(res, securityHistoryModel.getPortfolioHistory(userId, currency, startDate, endDate));
 });
 
 export { portfolioHistoryRouter };

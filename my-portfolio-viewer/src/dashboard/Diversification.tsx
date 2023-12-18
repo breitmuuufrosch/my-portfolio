@@ -114,6 +114,8 @@ function CustomTooltip({ active, payload }: any) {
         }))));
 
     finalPositions.push(...summary.filter((item) => item.value > 0));
+    const weight = payload[0].payload.percentage() * 100;
+    const totalWeight = payload[0].payload.percentage() * payload[0].payload.parent.percentage() * 100;
 
     return (
       <Grid
@@ -126,7 +128,9 @@ function CustomTooltip({ active, payload }: any) {
         }}
       >
         <Grid item>{payload[0].name}</Grid>
-        <Grid item sx={{ pb: 2 }}>{`Value: ${formatNumber(payload[0].value)}`}</Grid>
+        <Grid item sx={{ pt: 1 }}>{`Value: ${formatNumber(payload[0].value)}`}</Grid>
+        <Grid item>{`Weight: ${formatPercentage(weight)}`}</Grid>
+        <Grid item sx={{ pb: 1 }}>{`Total Weight: ${formatPercentage(totalWeight)}`}</Grid>
         {
           finalPositions.map((position: IPieItem) => (
             <Grid item key={`${position.label}-${position.currency}`}>
@@ -351,7 +355,7 @@ function Chart() {
 
   const handleLegendMouseEnter = (e) => {
     console.log(e);
-    setHoverKey(e.value);
+    setHoverKey(e.id);
     // if (!barProps[e.dataKey]) {
     //   setBarProps({ ...barProps, hover: e.dataKey });
     // }
@@ -491,7 +495,7 @@ function Chart() {
             // content={renderLegend}
             payload={
               pieRoot?.children.map((entry) => ({
-                value: entry.label,
+                value: `${entry.label} (${formatPercentage(entry.percentage() * 100)})`,
                 type: 'square',
                 id: entry.label,
                 color: entry.color,

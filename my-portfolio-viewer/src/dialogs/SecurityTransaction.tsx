@@ -25,6 +25,7 @@ import {
   getAccounts,
   getSecurities,
   getSecurityHistoryById,
+  updateSecurityHistoryById,
 } from '../types/service';
 import { DropDown } from '../components/DropDown';
 import { InputDecimal } from '../components/InputDecimal';
@@ -100,13 +101,19 @@ export function SecurityTransactionDialog(props: {
 
   const [transaction, setTransaction] = React.useState<SecurityTransactionSummary>(null);
   const [accountTransaction, setAccountTransaction] = React.useState<AccountTransaction>(null);
-  // const [currencies, setCurrencies] = React.useState<Currency[]>(null);
   const [securities, setSecurities] = React.useState<Security[]>(null);
   const [accounts, setAccounts] = React.useState<Account[]>(null);
-  // const [value, setValue] = React.useState<Dayjs | null>(null);
 
+  const updateTransaction = (update: { [key: string]: string | number }): void => {
+    setTransaction({ ...transaction, ...update });
+  };
   const updateAccountTransaction = (update: { [key: string]: string | number }): void => {
     setAccountTransaction({ ...accountTransaction, ...update });
+  };
+
+  const saveTransaction = (): void => {
+    console.info(transaction);
+    updateSecurityHistoryById({ ...transaction, date: new Date(transaction.date) });
   };
 
   React.useEffect(() => {
@@ -165,6 +172,7 @@ export function SecurityTransactionDialog(props: {
                   items={securities}
                   itemKey={(item) => item.symbol}
                   itemDisplay={(item) => item.nameShort}
+                  onChange={(e) => { updateTransaction({ symbol: e.target.value }); }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -174,6 +182,7 @@ export function SecurityTransactionDialog(props: {
                   items={accounts}
                   itemKey={(item) => String(item.id)}
                   itemDisplay={(item) => `${item.name} (${item.currency})`}
+                  onChange={(e) => { updateTransaction({ accountId: e.target.value }); }}
                 />
               </Grid>
               <Grid item xs={12} md={6}>
@@ -371,7 +380,15 @@ export function SecurityTransactionDialog(props: {
         <DialogActions>
           <Grid container item spacing={2} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Grid item xs={6} md={2}>
-              <Button variant="contained" color="primary" startIcon={<SaveIcon />} fullWidth>Save</Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
+                onClick={saveTransaction}
+                fullWidth
+              >
+                Save
+              </Button>
             </Grid>
             <Grid item xs={6} md={2}>
               <Button variant="outlined" color="primary" startIcon={<CancelIcon />} fullWidth>Cancel</Button>

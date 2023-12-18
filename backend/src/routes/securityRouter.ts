@@ -3,7 +3,7 @@ import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityHistory';
 import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
-import { PorftolioQuote, Security, SecurityTransaction, SecurityPrice, DividendInfo } from '../types/security';
+import { PorftolioQuote, Security, SecurityTransaction, DividendInfo } from '../types/security';
 import { Trade } from '../types/trade';
 import { transactionRouter } from './security/transactionRouter';
 
@@ -92,7 +92,7 @@ securityRouter.put('/:symbol', async (req: Request, res: Response) => {
         security_id: security.id,
       }));
 
-      securityModel.updateHistory(securityHistory)
+      securityHistoryModel.updateHistory(securityHistory)
         .then((message: string) => { res.status(200).json({ message, data: securityHistory }); })
         .catch((err: Error) => { throw err; });
     })
@@ -134,7 +134,7 @@ securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityModel.getSecurityHistory(userId, security.id, startDate, endDate)
+      securityHistoryModel.getSecurityHistory(userId, security.id, startDate, endDate)
         .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes));
     })
     .catch((err: Error) => {

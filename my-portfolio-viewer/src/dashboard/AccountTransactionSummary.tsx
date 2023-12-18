@@ -45,11 +45,12 @@ export function AccountTransactionSummaryView() {
         setAccountSummary(
           result
             .map((item) => ({ ...item, date: new Date(item.date) }))
-            // .sort((a, b) => a.date.getTime() - b.date.getTime())
+            .sort((a, b) => a.date.getTime() - b.date.getTime())
             .map((item) => {
               cumsum += Number(item.total);
               return { ...item, cumsum };
-            }),
+            })
+            .reverse(),
         );
       },
     );
