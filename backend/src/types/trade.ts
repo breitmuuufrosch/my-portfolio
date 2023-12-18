@@ -5,6 +5,7 @@ export interface Trade {
   symbol: string,
   quoteType: string,
   currency: string,
+  buyPrice: number,
   entryPrice: number,
   entryPriceAll: number,
   amount: number,

@@ -13,6 +13,7 @@ export const findAll = (userId: number): Promise<Trade[]> => {
     symbol,
     quote_type,
     currency,
+    buy_price_all,
     entry_price,
     entry_price_all,
     amount,
@@ -39,6 +40,7 @@ export const findAll = (userId: number): Promise<Trade[]> => {
           symbol: row.symbol,
           currency: row.currency,
           quoteType: row.quote_type,
+          buyPrice: Number(row.buy_price_all),
           entryPrice: Number(row.entry_price),
           entryPriceAll: Number(row.entry_price_all),
           amount: Number(row.amount),
@@ -66,8 +68,8 @@ export const getDiversification = (userId: number): Promise<TradeDiversification
       s.symbol,
       s.name_short,
       s.quote_type,
-      CASE WHEN s.quote_type = 'CRYPTOCURRENCY' THEN 'Crypto' ELSE s.info->>'$.assetProfile.sector' END AS sector,
-      CASE WHEN s.quote_type = 'CRYPTOCURRENCY' THEN 'Crypto' ELSE s.info->>'$.assetProfile.industry' END AS industry,
+      CASE WHEN s.quote_type = 'CRYPTOCURRENCY' THEN 'Crypto' WHEN s.quote_type = 'ETF' THEN 'ETF' ELSE s.info->>'$.assetProfile.sector' END AS sector,
+      CASE WHEN s.quote_type = 'CRYPTOCURRENCY' THEN 'Crypto' WHEN s.quote_type = 'ETF' THEN 'ETF' ELSE s.info->>'$.assetProfile.industry' END AS industry,
       -- s.info->>'$.assetProfile.sector' AS sector,
       -- s.info->>'$.assetProfile.industry' AS industry,
       t.exit_price,
@@ -103,14 +105,11 @@ export const getDiversification = (userId: number): Promise<TradeDiversification
 
   const getRealEstate = (trade: any): string => {
     if (trade.quote_type === 'CASH') {
-      if (['yuh (house)', 'yuh (bike)'].includes(trade.symbol)) {
+      if (['yuh (house)', 'postfinance', 'postfinance 3A', 'ubs'].includes(trade.symbol)) {
         return 'CASH';
       }
       if (trade.symbol === 'Initial payment (house)') {
         return 'INITIAL PAYMENT';
-      }
-      if (trade.symbol === 'ubs') {
-        return 'CASH';
       }
     }
     if (['0P00000M6D.SW', '0P00000UYE.SW', '0P00005VLQ.SW'].includes(trade.symbol)) {

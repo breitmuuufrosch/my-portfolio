@@ -53,6 +53,12 @@ const columns: CustomColumn<TradesByAccount>[] = [
     style: (trade: TradesByAccount) => ({ color: (trade.profitLoss > 0) ? 'green' : 'red' }),
   },
   {
+    id: 'buyPrice',
+    label: 'Buy price',
+    align: 'right',
+    format: formatNumber,
+  },
+  {
     id: 'entryPrice',
     label: 'Entry price',
     align: 'right',
@@ -108,7 +114,7 @@ function TradesList({ selectSymbol }: TradesProps) {
       return;
     }
     const newFilteredTrades = trades.filter((t) => (
-      (depotId <= 0 || t.depotId === depotId) && (currencyId === '' || t.currency === currencyId)
+      (depotId <= 0 || t.depotId === depotId) && (currencyId === '' || t.currency === currencyId) && t.amount > 0
     ));
     // const firstTrade = newFilteredTrades[0];
     // setSymbol(firstTrade.symbol);
@@ -120,6 +126,7 @@ function TradesList({ selectSymbol }: TradesProps) {
           .filter((row) => row.currency === currency)
           .reduce(
             (accumulator, row) => {
+              accumulator.buyPrice += row.buyPrice;
               accumulator.entryPrice += row.entryPrice;
               accumulator.entryPriceAll += row.entryPriceAll;
               accumulator.exitPrice += row.exitPrice;
@@ -131,6 +138,7 @@ function TradesList({ selectSymbol }: TradesProps) {
               symbol: currency,
               quoteType: '',
               currency,
+              buyPrice: 0,
               entryPrice: 0,
               entryPriceAll: 0,
               amount: null,
