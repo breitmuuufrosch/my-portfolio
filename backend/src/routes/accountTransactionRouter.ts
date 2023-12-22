@@ -13,8 +13,8 @@ accountTransactionRouter.get('/', async (req: Request, res: Response) => {
     userId,
     accountId: Number(accountId),
     type: type ? String(type) : undefined,
-   });
-   handleRequest<AccountTransactionSummary[]>(res, requestPromise);
+  });
+  handleRequest<AccountTransactionSummary[]>(res, requestPromise);
 });
 
 accountTransactionRouter.get('/:id', async (req: Request, res: Response) => {
@@ -34,21 +34,22 @@ accountTransactionRouter.get('/account/:accountId', async (req: Request, res: Re
 accountTransactionRouter.post('/multiple', async (req: Request, res: Response) => {
   const transactions = req.body as AccountTransaction[];
 
-  Promise.all(transactions.map((item) => new Promise((resolve, reject) => {
-    accountTransactionModel.doesExist(item)
-      .then((exists: boolean) => {
-        if (exists) {
-          resolve('duplicate');
-          return;
-        }
+  handleRequest(
+    res,
+    Promise.all(transactions.map((item) => new Promise((resolve, reject) => {
+      accountTransactionModel.doesExist(item)
+        .then((exists: boolean) => {
+          if (exists) {
+            resolve('duplicate');
+            return;
+          }
 
-        accountTransactionModel.create(item)
-          .then(resolve)
-          .catch(reject);
-      });
-  })))
-    .then((result) => { res.status(200).json({ data: result }); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+          accountTransactionModel.create(item)
+            .then(resolve)
+            .catch(reject);
+        });
+    })))
+  );
 });
 
 export { accountTransactionRouter };

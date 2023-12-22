@@ -3,7 +3,7 @@ import { mysql as sql } from 'yesql';
 import { Currency } from '../types/currency';
 import { db } from '../db';
 
-export const create = (currency: Currency) => {
+export const create = (currency: Currency): Promise<number> => {
   const queryString = `
     INSERT INTO currency (symbol, description)
     VALUES (?, ?)
@@ -22,7 +22,7 @@ export const create = (currency: Currency) => {
   });
 };
 
-export const findOne = (symbol: string) => {
+export const findOne = (symbol: string): Promise<Currency> => {
   const queryString = `
     SELECT 
       c.symbol,
@@ -48,7 +48,7 @@ export const findOne = (symbol: string) => {
   });
 };
 
-export const findAll = () => {
+export const findAll = (): Promise<Currency[]> => {
   const queryString = `
     SELECT 
       c.symbol,
@@ -73,7 +73,7 @@ export const findAll = () => {
   });
 };
 
-export const update = (currency: Currency) => {
+export const update = (currency: Currency): Promise<Boolean> => {
   const queryString = `
     UPDATE currency
     SET symbol=:symbol,
@@ -86,7 +86,8 @@ export const update = (currency: Currency) => {
       sql(queryString)({ symbol: currency.symbol, description: currency.description }),
       (err, result) => {
         if (err) { reject(err); return; }
-        resolve(result);
+        const { affectedRows } = <OkPacket>result;
+        resolve(affectedRows > 0);
       },
     );
   });

@@ -1,7 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as accountModel from '../models/account';
-import * as accountTransactionModel from '../models/accountTransaction';
-import { Account, AccountTransaction, AccountTransactionSummary, AccountSummary } from '../types/account';
+import { Account, AccountSummary } from '../types/account';
 import { handleRequest } from '../utils/server';
 
 const accountRouter = express.Router();

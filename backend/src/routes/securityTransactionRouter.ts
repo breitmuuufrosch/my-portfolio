@@ -9,20 +9,16 @@ const securityTransactionRouter = express.Router();
 securityTransactionRouter.get('/', async (req: Request, res: Response) => {
   const { securityId, type } = req.query;
   const userId = Number(req.headers['x-user-id']);
-
-  securityTransactionModel.findAll({ userId, securityId: Number(securityId), type: type ? String(type) : undefined })
-    .then((currencies: SecurityTransactionSummary[]) => { res.status(200).json(currencies); })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+  handleRequest<SecurityTransactionSummary[]>(
+    res,
+    securityTransactionModel.findAll({ userId, securityId: Number(securityId), type: type ? String(type) : undefined })
+  );
 });
 
 securityTransactionRouter.get('/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
   const userId = Number(req.headers['x-user-id']);
-  console.log(userId);
-
-  securityTransactionModel.findOne(userId, Number(id))
-    .then((currencies: SecurityTransactionSummary) => { res.status(200).json(currencies); })
-    .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
+  handleRequest<SecurityTransactionSummary>(res, securityTransactionModel.findOne(userId, Number(id)));
 });
 
 securityTransactionRouter.post('/', async (req: Request, res: Response) => {
@@ -37,7 +33,6 @@ securityTransactionRouter.post('/', async (req: Request, res: Response) => {
 securityTransactionRouter.patch('/:id', async (req: Request, res: Response) => {
   console.log(req);
   const transaction = req.body as SecurityTransactionSummary;
-
   handleRequest(res, securityTransactionModel.update(transaction));
 });
 

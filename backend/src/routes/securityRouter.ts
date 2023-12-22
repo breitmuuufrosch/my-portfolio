@@ -4,31 +4,24 @@ import * as securityHistoryModel from '../models/securityPrice';
 import * as securityTransactionModel from '../models/securityTransaction';
 import * as yahooFinance from '../models/yahooApi';
 import { PorftolioQuote, Security, SecurityTransaction } from '../types/security';
+import { handleRequest } from '../utils/server';
 
 const securityRouter = express.Router();
 
 securityRouter.get('/', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
-
-  securityModel.findAll(userId)
-    .then((securities: Security[]) => { res.status(200).json(securities); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+  handleRequest<Security[]>(res, securityModel.findAll(userId));
 });
 
 securityRouter.post('/', async (req: Request, res: Response) => {
   const { symbol, isin } = req.body;
   const security = await yahooFinance.findOne(symbol, isin);
-
-  securityModel.create(security)
-    .then(() => { res.status(200).json(security); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+handleRequest<number>(res, securityModel.create(security));
 });
 
 securityRouter.get('/:symbol', async (req: Request, res: Response) => {
   const symbol = String(req.params.symbol);
-  securityModel.findOne(symbol)
-    .then((security: Security) => { res.status(200).json(security); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+  handleRequest<Security>(res, securityModel.findOne(symbol));
 });
 
 securityRouter.put('/:symbol', async (req: Request, res: Response) => {

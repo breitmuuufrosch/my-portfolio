@@ -3,6 +3,7 @@ import * as tradeModel from '../models/trade';
 import * as yahooFinance from '../models/yahooApi';
 import { DividendInfo } from '../types/security';
 import { Trade } from '../types/trade';
+import { handleRequest } from '../utils/server';
 
 const dividendRouter = express.Router();
 
@@ -45,9 +46,7 @@ dividendRouter.get('/', async (req: Request, res: Response) => {
 
 dividendRouter.get('/:id', async (req: Request, res: Response) => {
   const symbol = String(req.params.id);
-  yahooFinance.getDividends(symbol)
-    .then((dividend) => { res.status(200).json({ data: dividend }); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
+  handleRequest<any>(res, yahooFinance.getDividends(symbol));
 });
 
 export { dividendRouter };
