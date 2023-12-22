@@ -64,16 +64,16 @@ export const getAccountSummary = async (): Promise<AccountSummary[]> => (
   getServiceData<AccountSummary[]>('http://localhost:3333/accounts/summary')
 );
 
-export const getAccountHistory = async (accountId: number): Promise<AccountTransactionSummary[]> => (
-  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/accounts/${accountId}/histories`)
+export const getAccountTransactions = async (accountId: number): Promise<AccountTransactionSummary[]> => (
+  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/account-transactions/account/${accountId}`)
 );
 
-export const getAccountHistoryByType = async (type: string): Promise<AccountTransactionSummary[]> => (
-  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/histories/accounts/?type=${type}`)
+export const getAccountTransactionsByType = async (type: string): Promise<AccountTransactionSummary[]> => (
+  getServiceData<AccountTransactionSummary[]>(`http://localhost:3333/account-transactions/?type=${type}`)
 );
 
 export const getAccountTransactionById = async (id: number): Promise<AccountTransaction> => (
-  getServiceData<AccountTransaction>(`http://localhost:3333/histories/accounts/${id}`)
+  getServiceData<AccountTransaction>(`http://localhost:3333/account-transactions/${id}`)
 );
 
 export const getTrades = async (): Promise<Trade[]> => getServiceData<Trade[]>('http://localhost:3333/trades');
@@ -103,15 +103,18 @@ export const getSecurityTransactionDetails = async (
 );
 
 export const getSecurityHistoryById = async (id: number): Promise<SecurityTransactionSummary> => (
-  getServiceData<SecurityTransactionSummary>(`http://localhost:3333/histories/securities/${id}`)
+  getServiceData<SecurityTransactionSummary>(`http://localhost:3333/security-transactions/${id}`)
 );
 
 export const updateSecurityHistoryById = async (securityTransaction: SecurityTransactionSummary) => (
-  updateServiceData<SecurityTransactionSummary>('http://localhost:3333/securities/transaction', securityTransaction)
+  updateServiceData<SecurityTransactionSummary>(
+    `http://localhost:3333/security-transactions/${securityTransaction.id}`,
+    securityTransaction,
+  )
 );
 
 export const getDividends = async (): Promise<DividendInfo[]> => (
-  getServiceData<DividendInfo[]>('http://localhost:3333/securities/dividends')
+  getServiceData<DividendInfo[]>('http://localhost:3333/dividends')
 );
 
 export const getPortfolioQuotes = async (
@@ -120,7 +123,7 @@ export const getPortfolioQuotes = async (
   endDate: Date,
 ): Promise<PorftolioQuote[]> => (
   getServiceData<PorftolioQuote[]>(
-    `http://localhost:3333/histories/portfolios/${currency}?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
+    `http://localhost:3333/portfolio/history/${currency}?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
   )
 );
 

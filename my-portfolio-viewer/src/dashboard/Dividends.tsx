@@ -7,7 +7,7 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import { SecurityTransaction, SecurityTransactionType } from '@backend/types/security';
-import { getAccountHistoryByType, getDividends } from '../types/service';
+import { getAccountTransactionsByType, getDividends } from '../types/service';
 import { formatNumber } from '../data/formatting';
 
 function range(low: number, high: number) {
@@ -61,7 +61,7 @@ export function Dividends() {
   const updateTransactions = (newTransactions: SecurityTransaction[]) => {
     const closeValues = newTransactions.map((item) => new Date(item.date));
     const minValue = new Date(Math.min.apply(null, closeValues));
-    const maxValue = new Date();
+    const maxValue = new Date(Math.max.apply(null, closeValues));
     setDateRange(range(minValue.getFullYear(), maxValue.getFullYear()));
 
     const g = groupByDate(newTransactions);
@@ -91,7 +91,7 @@ export function Dividends() {
           updateTransactions(newTransactions.filter((d) => d.date > new Date()));
         });
     } else {
-      const promises = types.map((type) => getAccountHistoryByType(type));
+      const promises = types.map((type) => getAccountTransactionsByType(type));
 
       Promise.all(promises)
         .then((results) => {

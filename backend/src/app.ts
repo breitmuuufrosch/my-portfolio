@@ -4,11 +4,15 @@ import * as bodyParser from 'body-parser';
 import cors from 'cors';
 // import * as path from 'path';
 import { accountRouter } from './routes/accountRouter';
+import { accountTransactionRouter } from './routes/accountTransactionRouter';
 import { currencyRouter } from './routes/currencyRouter';
+import { depotRouter } from './routes/depotRouter';
+import { dividendRouter } from './routes/dividendRouter';
+import { portfolioRouter } from './routes/portfolioRouter';
+import { securityPriceRouter } from './routes/securityPriceRouter';
+import { securityTransactionRouter } from './routes/securityTransactionRouter';
 import { securityRouter } from './routes/securityRouter';
 import { tradeRouter } from './routes/tradeRouter';
-import { historyRouter } from './routes/historyRouter';
-import { depotRouter } from './routes/depotRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
@@ -68,11 +72,15 @@ app.use(cors(corsOptions));
 
 app.use(bodyParser.json());
 app.use('/accounts', accountRouter);
+app.use('/account-transactions', accountTransactionRouter);
 app.use('/currencies', currencyRouter);
 app.use('/depots', depotRouter);
+app.use('/dividends', dividendRouter);
+app.use('/portfolio', portfolioRouter);
 app.use('/securities', securityRouter);
+app.use('/security-prices', securityPriceRouter);
+app.use('/security-transactions', securityTransactionRouter);
 app.use('/trades', tradeRouter);
-app.use('/histories', historyRouter);
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console

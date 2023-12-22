@@ -1,12 +1,12 @@
 import express, { Request, Response } from 'express';
-import * as securityModel from '../../models/security';
-import * as securityHistoryModel from '../../models/securityHistory'
-import * as yahooFinance from '../../models/yahooApi';
-import { Security, SecurityPrice } from '../../types/security';
+import * as securityModel from '../models/security';
+import * as securityPriceModel from '../models/securityPrice'
+import * as yahooFinance from '../models/yahooApi';
+import { Security, SecurityPrice } from '../types/security';
 
-const priceHistoryRouter = express.Router();
+const securityPriceRouter = express.Router();
 
-priceHistoryRouter.post('/update-all', async (req: Request, res: Response) => {
+securityPriceRouter.post('/update-all', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
   
   securityModel.findAll(Number.isNaN(userId) ? -1 : userId)
@@ -20,7 +20,7 @@ priceHistoryRouter.post('/update-all', async (req: Request, res: Response) => {
               security_id: security.id,
             }));
 
-            securityHistoryModel.updateHistory(securityHistory)
+            securityPriceModel.updateHistory(securityHistory)
               .then(() => resolve({ symbol: security.symbol, success: true }))
               .catch(() => reject(new Error(`${security.symbol} success: false`)));
           });
@@ -32,4 +32,4 @@ priceHistoryRouter.post('/update-all', async (req: Request, res: Response) => {
     .catch((err: Error) => { res.status(500).json({ message: err.message }); });
 });
 
-export { priceHistoryRouter };
+export { securityPriceRouter };

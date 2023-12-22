@@ -1,7 +1,69 @@
-import { OkPacket } from 'mysql2';
+import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { SecurityTransaction } from '../types/security';
+import { SecurityTransaction, SecurityTransactionSummary, rowToSecurityHistory } from '../types/security';
+
+export interface SecurityTransactionParams {
+  userId: number,
+  accountId?: number,
+  securityId?: number,
+  type?: string,
+}
+
+export const findOne = (userId: number, id: number): Promise<SecurityTransactionSummary> => {
+  let queryString = `
+    SELECT *
+    FROM security_transaction_summary AS sts
+    WHERE 
+      sts.user_id = :userId
+      AND sts.id = :id
+  `;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      sql(queryString)({ id, userId }),
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const row = (<RowDataPacket>result)[0];
+        resolve(rowToSecurityHistory(row));
+      },
+    );
+  });
+};
+
+export const findAll = (params: SecurityTransactionParams): Promise<SecurityTransactionSummary[]> => {
+  let queryString = `
+    SELECT *
+    FROM security_transaction_summary AS sts
+  `;
+
+    const filters = ['sts.user_id = :userId'];
+    if (params.securityId) {
+      filters.push('sts.security_id = :securityId');
+    }
+    if (params.type) {
+      filters.push('sts.type = :type');
+    }
+    if (params.accountId) {
+      filters.push('sts.account_id = :accountId');
+    }
+    queryString += `
+    WHERE ${filters.join(' AND ')}
+    `;
+
+  return new Promise((resolve, reject) => {
+    db.query(
+      sql(queryString)({ ...params }),
+      (err, result) => {
+        if (err) { reject(err); return; }
+
+        const rows = <RowDataPacket[]>result;
+        resolve(rows.map(rowToSecurityHistory));
+      },
+    );
+  });
+};
 
 export const doesExist = (securityTransaction: SecurityTransaction): Promise<boolean> => {
   const queryString = sql(`
