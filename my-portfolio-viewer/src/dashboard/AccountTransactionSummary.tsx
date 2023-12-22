@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AccountTransactionSummary } from '@backend/types/account';
-import { getAccountHistory } from '../types/service';
+import { getAccountTransactions } from '../types/service';
 import { formatDate, formatNumber } from '../data/formatting';
 import { CustomColumn, CustomTable } from '../components/Table';
 
@@ -38,7 +38,7 @@ export function AccountTransactionSummaryView() {
   const [accountSummary, setAccountSummary] = React.useState<AccountTransactionSummaryCum[] | null>(null);
 
   React.useEffect(() => {
-    getAccountHistory(Number(searchParams.get('accountId'))).then(
+    getAccountTransactions(Number(searchParams.get('accountId'))).then(
       (result) => {
         let cumsum = 0;
 

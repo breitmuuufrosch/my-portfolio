@@ -31,6 +31,8 @@ interface HistoryItem {
   buy?: number,
   sell?: number,
   dividend?: number,
+  posting?: number,
+  vesting?: number,
 }
 
 interface Duration {
@@ -187,11 +189,15 @@ function Chart(props: {
                   const dataPoint = newHistory.find((h) => h.date === isoDate(transaction.date));
                   if (dataPoint) {
                     if (transaction.type === 'buy') {
-                      dataPoint.buy = viewMode ? dataPoint.value : transaction.price;
+                      dataPoint.buy = viewMode !== ViewMode.PRICE ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'sell') {
-                      dataPoint.sell = viewMode ? dataPoint.value : transaction.price;
+                      dataPoint.sell = viewMode !== ViewMode.PRICE ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'dividend') {
                       dataPoint.dividend = dataPoint.value;
+                    } else if (transaction.type === 'posting') {
+                      dataPoint.posting = dataPoint.value;
+                    } else if (transaction.type === 'vesting') {
+                      dataPoint.vesting = dataPoint.value;
                     }
                   }
 
@@ -330,8 +336,24 @@ function Chart(props: {
             name="Dividend"
             dataKey="dividend"
             shape="circle"
-            fill="#8884d8"
+            fill="#8884D8"
             legendType="circle"
+          />
+          <Scatter
+            isAnimationActive={false}
+            name="Posting"
+            dataKey="posting"
+            shape="cross"
+            fill="#B2FFBE"
+            legendType="cross"
+          />
+          <Scatter
+            isAnimationActive={false}
+            name="Vesting"
+            dataKey="vesting"
+            shape="diamond"
+            fill="#FFB2B2"
+            legendType="diamond"
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
           <Legend layout="vertical" verticalAlign="top" align="right" wrapperStyle={{ paddingLeft: 15 }} />

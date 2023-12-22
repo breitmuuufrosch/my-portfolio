@@ -1,10 +1,10 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { PorftolioQuote, Security, SecurityPrice } from '../types/security';
+import { Security, SecurityPrice } from '../types/security';
 
 export const findOne = (symbol: string): Promise<Security> => {
-  const queryString = sql(`
+  const queryString = `
     SELECT
       s.id,
       s.symbol,
@@ -19,12 +19,11 @@ export const findOne = (symbol: string): Promise<Security> => {
       s.source_url
     FROM security AS s
     WHERE s.symbol=:symbol
-  `);
-  const sqlQuery = queryString({ symbol });
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      sqlQuery,
+      sql(queryString)({ symbol }),
       (err, result) => {
         try {
           if (err) { reject(err); return; }

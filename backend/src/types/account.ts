@@ -1,3 +1,5 @@
+import { RowDataPacket } from 'mysql2';
+
 export type AccountTransactionType = (
   'payment' | 'payout' | 'transfer' | 'fee' | 'fee_refund' | 'tax' | 'tax_refund' | 'interest' | 'interest_charge'
 );
@@ -36,6 +38,21 @@ export interface AccountTransaction {
   toTax: number,
 }
 
+export const rowToAccountTransaction = (row: RowDataPacket): AccountTransaction => ({
+  date: row.date,
+  type: row.type,
+  fromAccountId: row.from_account_id,
+  fromCurrency: row.from_currency,
+  fromValue: Number(row.from_value),
+  fromFee: Number(row.from_fee),
+  fromTax: Number(row.from_tax),
+  toAccountId: row.to_account_id,
+  toCurrency: row.to_currency,
+  toValue: Number(row.to_value),
+  toFee: Number(row.to_fee),
+  toTax: Number(row.to_tax),
+});
+
 export interface AccountTransactionSummary {
   id: number,
   type: AccountTransactionType,
@@ -50,3 +67,18 @@ export interface AccountTransactionSummary {
   fee: number,
   tax: number,
 }
+
+export const rowToAccountTransactionSummary = (row: RowDataPacket): AccountTransactionSummary => ({
+  id: row.id,
+  accountId: row.account_id,
+  securityId: row.security_id,
+  symbol: row.symbol,
+  nameShort: row.name_short,
+  date: row.date,
+  type: row.type,
+  currency: row.currency,
+  total: Number(row.total),
+  value: Number(row.value),
+  fee: Number(row.fee),
+  tax: Number(row.tax),
+});

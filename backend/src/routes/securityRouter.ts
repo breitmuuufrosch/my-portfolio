@@ -1,59 +1,11 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
-import * as securityHistoryModel from '../models/securityHistory';
-import * as tradeModel from '../models/trade';
+import * as securityHistoryModel from '../models/securityPrice';
+import * as securityTransactionModel from '../models/securityTransaction';
 import * as yahooFinance from '../models/yahooApi';
-import { PorftolioQuote, Security, SecurityTransaction, DividendInfo } from '../types/security';
-import { Trade } from '../types/trade';
-import { transactionRouter } from './security/transactionRouter';
+import { PorftolioQuote, Security, SecurityTransaction } from '../types/security';
 
 const securityRouter = express.Router();
-
-securityRouter.use('/transaction', transactionRouter);
-
-securityRouter.get('/dividends', async (req: Request, res: Response) => {
-  type TradeInfo = [string, number, string];
-  const userId = Number(req.headers['x-user-id']);
-
-  tradeModel.findAll(userId)
-    .then((trades: Trade[]) => trades.map((trade) => [trade.symbol, trade.amount, trade.currency]))
-    .then((securities: TradeInfo[]) => {
-      const allDividends = securities.map((trade: TradeInfo) => (
-        new Promise<DividendInfo>((resolve) => {
-          yahooFinance.getDividends(trade[0])
-            .then((divResult) => {
-              if (Number.isNaN(divResult.dividendRate) === false) {
-                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1], exDividendDate: divResult.exDividendDate, payDividendDate: divResult.dividendDate, currency: divResult.currencty });
-              } else {
-                resolve({ symbol: trade[0], total: 0, currency: trade[2] });
-              }
-            })
-            .catch(() => resolve(undefined));
-        })
-      ));
-
-      Promise.all(allDividends)
-        .then((divResult) => {
-          let total = 0;
-          divResult.filter((item) => item && !Number.isNaN(item.total)).forEach((dividend) => {
-            total += Number.isNaN(dividend.total) ? 0 : dividend.total;
-          });
-          console.log(divResult);
-          res.status(200).json(divResult.filter((item) => item && !Number.isNaN(item.total)));
-        })
-        .catch((err: Error) => { throw err; });
-    })
-    .catch((err: Error) => {
-      res.status(500).json({ message: err.message });
-    });
-});
-
-securityRouter.get('/dividends/:id', async (req: Request, res: Response) => {
-  const symbol = String(req.params.id);
-  yahooFinance.getDividends(symbol)
-    .then((dividend) => { res.status(200).json({ data: dividend }); })
-    .catch((err: Error) => { res.status(500).json({ message: err.message }); });
-});
 
 securityRouter.get('/', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
@@ -107,7 +59,7 @@ securityRouter.get('/:symbol/transactions', async (req: Request, res: Response) 
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityHistoryModel.findAll({ userId, securityId: security.id })
+      securityTransactionModel.findAll({ userId, securityId: security.id })
         .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); });
     })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });
@@ -120,7 +72,7 @@ securityRouter.get('/:symbol/transactions/:accountId', async (req: Request, res:
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityHistoryModel.findAll({ userId, accountId, securityId: security.id })
+      securityTransactionModel.findAll({ userId, accountId, securityId: security.id })
         .then((currencies: SecurityTransaction[]) => { res.status(200).json(currencies); });
     })
     .catch((err: Error) => { res.status(500).json({ errorMessage: err.message }); });

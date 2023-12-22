@@ -4,13 +4,14 @@ import { Currency } from '../types/currency';
 import { db } from '../db';
 
 export const create = (currency: Currency) => {
-  const queryString = sql(
-    'INSERT INTO currency (symbol, description) VALUES (?, ?)',
-  );
+  const queryString = `
+    INSERT INTO currency (symbol, description)
+    VALUES (?, ?)
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString({ symbol: currency.symbol, description: currency.description }),
+      sql(queryString)({ symbol: currency.symbol, description: currency.description }),
       (err, result) => {
         if (err) { reject(err); return; }
 
@@ -22,17 +23,17 @@ export const create = (currency: Currency) => {
 };
 
 export const findOne = (symbol: string) => {
-  const queryString = sql(`
+  const queryString = `
     SELECT 
       c.symbol,
       c.description
     FROM currency AS c
     WHERE c.symbol=:symbol
-  `);
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString({ symbol }),
+      sql(queryString)({ symbol }),
       (err, result) => {
         if (err) { reject(err); return; }
 
@@ -52,7 +53,8 @@ export const findAll = () => {
     SELECT 
       c.symbol,
       c.description
-    FROM currency AS c`;
+    FROM currency AS c
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
@@ -72,13 +74,16 @@ export const findAll = () => {
 };
 
 export const update = (currency: Currency) => {
-  const queryString = sql(
-    'UPDATE currency SET symbol=:symbol, description=:description WHERE symbol=:symbol',
-  );
+  const queryString = `
+    UPDATE currency
+    SET symbol=:symbol,
+      description=:description
+    WHERE symbol=:symbol
+  `;
 
   return new Promise((resolve, reject) => {
     db.query(
-      queryString({ symbol: currency.symbol, description: currency.description }),
+      sql(queryString)({ symbol: currency.symbol, description: currency.description }),
       (err, result) => {
         if (err) { reject(err); return; }
         resolve(result);
