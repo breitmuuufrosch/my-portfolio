@@ -1,55 +1,9 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { PorftolioQuote, SecurityPrice } from '../types/security';
+import { PorftolioQuote } from '../types/security';
 
-export const updateHistory = (history: SecurityPrice[]): Promise<string> => {
-  const queryString = `
-    INSERT INTO security_price (
-      security_id,
-      date,
-      high,
-      low,
-      open,
-      close,
-      adjclose,
-      volume
-    )
-    VALUES ?
-    ON DUPLICATE KEY UPDATE
-      high=VALUES(high),
-      low=VALUES(low),
-      open=VALUES(open),
-      close=VALUES(close),
-      adjclose=VALUES(adjclose),
-      volume=VALUES(volume)
-  `;
-
-  return new Promise((resolve, reject) => {
-    db.query(
-      queryString,
-      [
-        history.map((item) => [
-          item.security_id,
-          item.date,
-          item.high,
-          item.low,
-          item.open,
-          item.close,
-          item.adjClose,
-          item.volume,
-        ]),
-      ],
-      (err, result) => {
-        if (err) { reject(err); return; }
-
-        resolve(`inserted-rows ${(<OkPacket>result).affectedRows}`);
-      },
-    );
-  });
-};
-
-export const getSecurityHistory = (userId: number, securityId: number, startDate: Date, endDate: Date): Promise<PorftolioQuote[]> => {
+export const getPortfolioHistory = (userId: number, currency: string, startDate: Date, endDate: Date): Promise<PorftolioQuote[]> => {
   startDate = startDate ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1));
   endDate = endDate ?? new Date();
 
@@ -73,14 +27,12 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
         SUM(CASE WHEN security_summary.type IN ('sell','vesting') THEN -security_summary.value ELSE security_summary.value END) AS entry_price
       FROM security_price AS sph
       LEFT JOIN security AS s_details ON s_details.id = sph.security_id
-      LEFT JOIN security_transaction_summary AS security_summary ON
+      INNER JOIN security_transaction_summary AS security_summary ON
         security_summary.security_id = sph.security_id
         AND security_summary.date <= sph.date
-        AND security_summary.type IN ('buy', 'sell', 'posting','vesting')
-        AND security_summary.user_id = :userId
+        AND security_summary.type IN ('buy', 'sell', 'posting')
       LEFT JOIN account AS a ON a.id = security_summary.account_id
-        AND a.user_id = :userId
-      WHERE sph.security_id IN (:securityId)
+      -- WHERE sph.security_id IN (1, 10)
       GROUP BY
         a.user_id,
         sph.security_id,
@@ -88,8 +40,8 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
         sph.date
       ORDER BY sph.date
     ) AS pf_value
-    WHERE
-      (pf_value.user_id = :userId or pf_value.user_id IS NULL)
+    WHERE pf_value.currency = :currency
+	    AND pf_value.user_id = :userId
       AND WEEKDAY(pf_value.date) NOT IN (5, 6)
       AND pf_value.date BETWEEN :startDate AND :endDate
     GROUP BY
@@ -100,7 +52,7 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
 
   return new Promise((resolve, reject) => {
     db.query(
-      sql(queryString)({ userId, securityId, startDate, endDate }),
+      sql(queryString)({ userId, currency, startDate, endDate }),
       (err, result) => {
         if (err) { reject(err); return; }
 
