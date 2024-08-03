@@ -135,8 +135,6 @@ function Chart(props: {
   };
 
   React.useEffect(() => {
-    console.log('chart', symbol);
-
     if (['CHF', 'EUR', 'USD'].includes(symbol)) {
       getPortfolioQuotes(symbol, dates[0], dates[1])
         .then(
@@ -220,9 +218,9 @@ function Chart(props: {
     }
   }, [symbol, accountId, dates, viewMode]);
 
-  React.useEffect(() => {
-    console.log(securityHistory);
-  }, [securityHistory]);
+  // React.useEffect(() => {
+  //   console.log(securityHistory);
+  // }, [securityHistory]);
 
   return (
     <>

@@ -163,7 +163,6 @@ function TradesList({ selectSymbol }: TradesProps) {
           return updatedTrade;
         }),
     );
-    console.log(filteredTrades);
   }, [trades, depotId, currencyId]);
 
   React.useEffect(() => {
@@ -251,7 +250,7 @@ function Trades() {
       <Grid item xs={12}>
         <TradesList
           selectSymbol={(symbolP: string, accountIdP: number) => {
-            console.log(symbolP, accountId); setSymbol(symbolP); setAccountId(accountIdP);
+            setSymbol(symbolP); setAccountId(accountIdP);
           }}
         />
       </Grid>
