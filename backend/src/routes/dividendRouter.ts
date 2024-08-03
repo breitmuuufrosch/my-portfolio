@@ -18,8 +18,21 @@ dividendRouter.get('/', async (req: Request, res: Response) => {
         new Promise<DividendInfo>((resolve) => {
           yahooFinance.getDividends(trade[0])
             .then((divResult) => {
-              if (Number.isNaN(divResult.dividendRate) === false) {
-                resolve({ symbol: trade[0], total: divResult.dividendRate * trade[1], exDividendDate: divResult.exDividendDate, payDividendDate: divResult.dividendDate, currency: divResult.currencty });
+              if (Number.isNaN(divResult.dividendRate) === false && divResult.dividendRate !== undefined) {
+                const dividend = {
+                  symbol: trade[0],
+                  total: divResult.dividendRate * trade[1],
+                  exDividendDate: new Date(divResult.exDividendDate),
+                  payDividendDate: new Date(divResult.dividendDate),
+                  currency: divResult.currencty,
+                };
+
+                if (dividend.payDividendDate < new Date()) {
+                  dividend.payDividendDate.setFullYear(dividend.payDividendDate.getFullYear() + 1);
+                  dividend.exDividendDate.setFullYear(dividend.exDividendDate.getFullYear() + 1);
+                }
+
+                resolve(dividend);
               } else {
                 resolve({ symbol: trade[0], total: 0, currency: trade[2] });
               }
@@ -29,13 +42,14 @@ dividendRouter.get('/', async (req: Request, res: Response) => {
       ));
 
       Promise.all(allDividends)
+        .then((divResult) => divResult.filter((item) => item && !Number.isNaN(item.total)))
         .then((divResult) => {
           let total = 0;
-          divResult.filter((item) => item && !Number.isNaN(item.total)).forEach((dividend) => {
+          divResult.forEach((dividend) => {
             total += Number.isNaN(dividend.total) ? 0 : dividend.total;
           });
           console.log(divResult);
-          res.status(200).json(divResult.filter((item) => item && !Number.isNaN(item.total)));
+          res.status(200).json(divResult);
         })
         .catch((err: Error) => { throw err; });
     })

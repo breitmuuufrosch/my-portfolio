@@ -13,6 +13,7 @@ import { securityPriceRouter } from './routes/securityPriceRouter';
 import { securityTransactionRouter } from './routes/securityTransactionRouter';
 import { securityRouter } from './routes/securityRouter';
 import { tradeRouter } from './routes/tradeRouter';
+import { forexPriceRouter } from './routes/forexPriceRouter';
 
 // import compression from 'compression';
 // import helmet from 'helmet';
@@ -81,6 +82,7 @@ app.use('/securities', securityRouter);
 app.use('/security-prices', securityPriceRouter);
 app.use('/security-transactions', securityTransactionRouter);
 app.use('/trades', tradeRouter);
+app.use('/forex-prices', forexPriceRouter)
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console

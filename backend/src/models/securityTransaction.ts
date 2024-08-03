@@ -1,7 +1,7 @@
 import { OkPacket, RowDataPacket } from 'mysql2';
 import { mysql as sql } from 'yesql';
 import { db } from '../db';
-import { SecurityTransaction, SecurityTransactionSummary, rowToSecurityHistory } from '../types/security';
+import { SecurityTransaction, SecurityTransactionForeign, SecurityTransactionSummary, rowToSecurityHistory } from '../types/security';
 
 export interface SecurityTransactionParams {
   userId: number,
@@ -38,17 +38,17 @@ export const findAll = (params: SecurityTransactionParams): Promise<SecurityTran
     FROM security_transaction_summary AS sts
   `;
 
-    const filters = ['sts.user_id = :userId'];
-    if (params.securityId) {
-      filters.push('sts.security_id = :securityId');
-    }
-    if (params.type) {
-      filters.push('sts.type = :type');
-    }
-    if (params.accountId) {
-      filters.push('sts.account_id = :accountId');
-    }
-    queryString += `
+  const filters = ['sts.user_id = :userId'];
+  if (params.securityId) {
+    filters.push('sts.security_id = :securityId');
+  }
+  if (params.type) {
+    filters.push('sts.type = :type');
+  }
+  if (params.accountId) {
+    filters.push('sts.account_id = :accountId');
+  }
+  queryString += `
     WHERE ${filters.join(' AND ')}
     `;
 
@@ -89,7 +89,7 @@ export const doesExist = (securityTransaction: SecurityTransaction): Promise<boo
   });
 };
 
-export const create = (securityTransaction: SecurityTransaction): Promise<number[]> => {
+export const create = (securityTransaction: SecurityTransaction | SecurityTransactionForeign): Promise<number[]> => {
   const queryMainCurrency = sql(`
     INSERT INTO money (currency, value, fee, tax)
     VALUES (:currency, :value, :fee, :tax);
@@ -99,7 +99,7 @@ export const create = (securityTransaction: SecurityTransaction): Promise<number
 
   const queryForeignCurrency = sql(`
     INSERT INTO money (currency, value, fee, tax)
-    VALUES (:currency, :exchangeToValue, 0, 0);
+    VALUES (:exchangeToCurrency, :exchangeToValue, :exchangeToFee, :exchangeToTax);
     SET @account_transfer_to := LAST_INSERT_ID();
 
     INSERT INTO money (currency, value, fee, tax)
@@ -111,7 +111,7 @@ export const create = (securityTransaction: SecurityTransaction): Promise<number
     SET @money_trade := LAST_INSERT_ID();
 
     INSERT INTO account_transaction (date, type, from_account_id, from_money_id, to_account_id, to_money_id)
-    VALUES (:date, 'transfer', :exchangeFromAccountId, @account_transfer_from, :accountId, @account_transfer_to);
+    VALUES (:date, 'transfer', :exchangeFromAccountId, @account_transfer_from, :exchangeToAccountId, @account_transfer_to);
     SET @account_transaction := LAST_INSERT_ID();
 
     INSERT INTO security_transaction (
@@ -122,8 +122,24 @@ export const create = (securityTransaction: SecurityTransaction): Promise<number
 
   let query = queryMainCurrency;
 
-  if (Object.prototype.hasOwnProperty.call(securityTransaction, 'exchangeFromCurrency')) {
+  if (Object.prototype.hasOwnProperty.call(securityTransaction, 'exchangeFromCurrency') || Object.prototype.hasOwnProperty.call(securityTransaction, 'exchangeToCurrency')) {
     query = queryForeignCurrency;
+
+    if (['buy', 'posting'].includes(securityTransaction.type)) {
+      (securityTransaction as SecurityTransactionForeign).exchangeToAccountId = securityTransaction.accountId;
+      (securityTransaction as SecurityTransactionForeign).exchangeToCurrency = securityTransaction.currency;
+      (securityTransaction as SecurityTransactionForeign).exchangeToFee = (securityTransaction as SecurityTransactionForeign).exchangeToFee ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeToTax = (securityTransaction as SecurityTransactionForeign).exchangeToTax ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeFromFee = (securityTransaction as SecurityTransactionForeign).exchangeFromFee ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeFromTax = (securityTransaction as SecurityTransactionForeign).exchangeFromTax ?? 0;
+    } else if (['sell', 'vesting'].includes(securityTransaction.type)) {
+      (securityTransaction as SecurityTransactionForeign).exchangeFromAccountId = securityTransaction.accountId;
+      (securityTransaction as SecurityTransactionForeign).exchangeFromCurrency = securityTransaction.currency;
+      (securityTransaction as SecurityTransactionForeign).exchangeToFee = (securityTransaction as SecurityTransactionForeign).exchangeToFee ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeToTax = (securityTransaction as SecurityTransactionForeign).exchangeToTax ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeFromFee = (securityTransaction as SecurityTransactionForeign).exchangeFromFee ?? 0;
+      (securityTransaction as SecurityTransactionForeign).exchangeFromTax = (securityTransaction as SecurityTransactionForeign).exchangeFromTax ?? 0;
+    }
   }
 
   return new Promise((resolve, reject) => {

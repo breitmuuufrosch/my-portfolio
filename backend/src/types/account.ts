@@ -20,7 +20,9 @@ export interface AccountSummary {
   id: number,
   name: string,
   currency: string,
-  balance: number
+  balance: number,
+  currencyDefault: string,
+  balanceDefault: number,
 }
 
 export interface AccountTransaction {

@@ -13,6 +13,7 @@ export const findAll = (userId: number): Promise<Trade[]> => {
     symbol,
     quote_type,
     currency,
+    buy_price,
     buy_price_all,
     entry_price,
     entry_price_all,
@@ -21,7 +22,9 @@ export const findAll = (userId: number): Promise<Trade[]> => {
     last_date,
     exit_price,
     profit_loss,
-    profit_loss_percentage
+    profit_loss_percentage,
+    exit_price_default,
+    currency_default
   FROM trade
   WHERE trade.user_id = :userId
   `;
@@ -40,7 +43,8 @@ export const findAll = (userId: number): Promise<Trade[]> => {
           symbol: row.symbol,
           currency: row.currency,
           quoteType: row.quote_type,
-          buyPrice: Number(row.buy_price_all),
+          buyPrice: Number(row.buy_price),
+          buyPriceAll: Number(row.buy_price_all),
           entryPrice: Number(row.entry_price),
           entryPriceAll: Number(row.entry_price_all),
           amount: Number(row.amount),
@@ -49,6 +53,8 @@ export const findAll = (userId: number): Promise<Trade[]> => {
           exitPrice: Number(row.exit_price),
           profitLoss: Number(row.profit_loss),
           profitLossPercentage: Number(row.profit_loss_percentage),
+          exitPriceDefault: Number(row.exit_price_default),
+          currencyDefault: row.currency_default,
         }));
         resolve(trades);
       },
@@ -58,7 +64,24 @@ export const findAll = (userId: number): Promise<Trade[]> => {
 
 export const getDiversification = (userId: number): Promise<TradeDiversification[]> => {
   const queryString = `
-  SELECT *
+  SELECT
+	*,
+    CASE WHEN d.currency = 'CHF' THEN d.exit_price
+    ELSE
+		exit_price * (
+			SELECT 
+				fp.close
+			FROM forex_price AS fp
+			WHERE
+				fp.currency_from = d.currency
+				AND fp.currency_to = 'CHF'
+			ORDER BY fp.date DESC
+			LIMIT 1
+		)
+    END AS exit_price_default,
+    'CHF' AS currency_default
+FROM (
+ SELECT *
   FROM (
     SELECT
       t.user_id,
@@ -99,8 +122,10 @@ export const getDiversification = (userId: number): Promise<TradeDiversification
     WHERE b.balance > 0
   ) AS w
   WHERE
-    w.user_id = :userId
+    w.user_id = 1
     AND exit_price > 0
+    AND w.symbol NOT LIKE '%Migros Bank%'
+) AS d
   `;
 
   const getRealEstate = (trade: any): string => {
@@ -137,6 +162,8 @@ export const getDiversification = (userId: number): Promise<TradeDiversification
           industry: row.industry,
           exitPrice: Number(row.exit_price),
           currency: row.currency,
+          exitPriceDefault: Number(row.exit_price_default),
+          currencyDefault: row.currency_default,
           realEstate: getRealEstate(row),
           account: row.account_name,
           depot: row.depot_name,

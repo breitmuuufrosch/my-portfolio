@@ -23,6 +23,7 @@ import {
   formatDate,
   formatPercentage,
 } from '../data/formatting';
+import { TriangleShape } from '../components/TriangleShape';
 
 interface HistoryItem {
   date: string,
@@ -33,6 +34,7 @@ interface HistoryItem {
   dividend?: number,
   posting?: number,
   vesting?: number,
+  size?: number,
 }
 
 interface Duration {
@@ -60,7 +62,7 @@ function CustomTooltip({ active, payload, label }: any) {
         }}
       >
         <Grid item>{label}</Grid>
-        <Grid item sx={{ pb: 2 }}>{`price: ${payload[0].value}`}</Grid>
+        <Grid item sx={{ pb: 2 }}>{`price: ${formatNumber(payload[0].value)}`}</Grid>
         {
           payload[0].payload.traded.map((trade: SecurityTransactionSummary) => (
             <Grid item key={trade.id}>
@@ -153,7 +155,7 @@ function Chart(props: {
             const minValue = Math.min(...closeValues);
             const maxValue = Math.max(...closeValues);
             const range = maxValue - minValue;
-            setDomain([Math.max(minValue - (0.02 * range), 0), maxValue + (0.02 * range)]);
+            setDomain([Math.max(minValue - (0.05 * range), 0), maxValue + (0.05 * range)]);
           },
         );
     } else {
@@ -179,7 +181,7 @@ function Chart(props: {
                 const minValue = Math.min(...closeValues);
                 const maxValue = Math.max(...closeValues);
                 const range = maxValue - minValue;
-                setDomain([minValue - (0.02 * range), maxValue + (0.02 * range)]);
+                setDomain([minValue - (0.05 * range), maxValue + (0.05 * range)]);
 
                 const firstPrice = closeValues.slice(0)[0];
                 const lastPrice = closeValues.slice(-1)[0];
@@ -195,9 +197,9 @@ function Chart(props: {
                     } else if (transaction.type === 'dividend') {
                       dataPoint.dividend = dataPoint.value;
                     } else if (transaction.type === 'posting') {
-                      dataPoint.posting = dataPoint.value;
+                      dataPoint.posting = viewMode !== ViewMode.PRICE ? dataPoint.value : transaction.price;
                     } else if (transaction.type === 'vesting') {
-                      dataPoint.vesting = dataPoint.value;
+                      dataPoint.vesting = viewMode !== ViewMode.PRICE ? dataPoint.value : transaction.price;
                     }
                   }
 
@@ -303,7 +305,7 @@ function Chart(props: {
                 ...theme.typography.body1,
               }}
             >
-              Price
+              {/* Price */}
             </Label>
           </YAxis>
           <ReferenceLine y={0} />
@@ -319,7 +321,8 @@ function Chart(props: {
             isAnimationActive={false}
             name="Buy"
             dataKey="buy"
-            shape="triangle"
+            // shape="triangle"
+            shape={<TriangleShape r={16} angle={0} />}
             fill="green"
             legendType="triangle"
           />
@@ -327,7 +330,7 @@ function Chart(props: {
             isAnimationActive={false}
             name="Sell"
             dataKey="sell"
-            shape="triangle"
+            shape={<TriangleShape r={16} angle={0} />}
             fill="red"
             legendType="triangle"
           />
@@ -343,17 +346,17 @@ function Chart(props: {
             isAnimationActive={false}
             name="Posting"
             dataKey="posting"
-            shape="cross"
+            shape={<TriangleShape r={16} angle={0} onlyRightIf="buy" />}
             fill="#B2FFBE"
-            legendType="cross"
+            legendType="triangle"
           />
           <Scatter
             isAnimationActive={false}
             name="Vesting"
             dataKey="vesting"
-            shape="diamond"
+            shape={<TriangleShape r={16} angle={0} />}
             fill="#FFB2B2"
-            legendType="diamond"
+            legendType="triangle"
           />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
           <Legend layout="vertical" verticalAlign="top" align="right" wrapperStyle={{ paddingLeft: 15 }} />

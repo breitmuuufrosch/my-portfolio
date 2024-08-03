@@ -2,13 +2,11 @@ import yahooFinance from 'yahoo-finance2';
 import { Security, SecurityPrice } from '../types/security';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
-
-  yahooFinance.quote(symbol)
-    .then((r) => console.log(r))
-    .catch((r) => console.log(r));
+  // yahooFinance.quote(symbol)
+  //   .then((r) => console.log(r))
+  //   .catch((r) => console.error(r));
   const response = await yahooFinance.quote(symbol);
-  const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: ["assetProfile"] });
-
+  const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: ["assetProfile"] }).catch((r) => { console.error(r); return {}; });
 
   // if (symbol === 'ZURN.SW') {
   //   console.log('here we are');
