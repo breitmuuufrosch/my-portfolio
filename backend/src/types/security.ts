@@ -79,7 +79,11 @@ export const rowToSecurityHistory = (row: RowDataPacket): SecurityTransactionSum
 });
 
 export interface SecurityTransactionForeign extends SecurityTransaction {
+  exchangeToCurrency: string,
   exchangeToValue: number,
+  exchangeToFee: number,
+  exchangeToTax: number,
+  exchangeToAccountId: number,
   exchangeFromCurrency: string,
   exchangeFromValue: number,
   exchangeFromFee: number,

@@ -8,7 +8,9 @@ import { Title } from './Title';
 
 function DashboardContent() {
   const [trades, setTrades] = React.useState<CurrencyOverview[] | null>(null);
+  const [tradesTotal, setTradesTotal] = React.useState<CurrencyOverview[] | null>(null);
   const [accounts, setAccounts] = React.useState<CurrencyOverview[] | null>(null);
+  const [accountsTotal, setAccountsTotal] = React.useState<CurrencyOverview[] | null>(null);
   const [all, setAll] = React.useState<CurrencyOverview[] | null>(null);
 
   React.useEffect(() => {
@@ -16,10 +18,14 @@ function DashboardContent() {
       .then(([tradesResult, accountsResult]) => {
         const activeTrades = tradesResult.filter((trade) => trade.amount > 0);
         const tradeSummary = getTotal(groupBy(activeTrades, 'currency'), 'exitPrice');
+        const tradeSummaryTotal = getTotal(groupBy(activeTrades, 'currencyDefault'), 'exitPriceDefault');
         setTrades(tradeSummary);
+        setTradesTotal(tradeSummaryTotal);
 
         const accountSummary = getTotal(groupBy(accountsResult, 'currency'), 'balance');
+        const accountSummaryTotal = getTotal(groupBy(accountsResult, 'currencyDefault'), 'balanceDefault');
         setAccounts(accountSummary);
+        setAccountsTotal(accountSummaryTotal);
 
         const allCurrencies = new Set<string>();
         tradeSummary.forEach((item) => allCurrencies.add(item.currency));
@@ -60,6 +66,14 @@ function DashboardContent() {
                   </Grid>
                 ))
               }
+              {
+                tradesTotal && tradesTotal.map((item) => (
+                  <Grid container item key={item.currency}>
+                    <Grid item xs={6}>{`Total ${item.currency}`}</Grid>
+                    <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
+                  </Grid>
+                ))
+              }
             </Grid>
           </Paper>
         </Grid>
@@ -72,6 +86,14 @@ function DashboardContent() {
               accounts && accounts.map((item) => (
                 <Grid container item key={item.currency}>
                   <Grid item xs={6}>{item.currency}</Grid>
+                  <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
+                </Grid>
+              ))
+            }
+            {
+              accountsTotal && accountsTotal.map((item) => (
+                <Grid container item key={item.currency}>
+                  <Grid item xs={6}>{`Total ${item.currency}`}</Grid>
                   <Grid item xs={6} textAlign="right">{formatNumber(item.sum, 2)}</Grid>
                 </Grid>
               ))

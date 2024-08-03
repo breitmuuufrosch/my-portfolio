@@ -59,6 +59,12 @@ const columns: CustomColumn<TradesByAccount>[] = [
     format: formatNumber,
   },
   {
+    id: 'buyPriceAll',
+    label: 'Buy price (all)',
+    align: 'right',
+    format: formatNumber,
+  },
+  {
     id: 'entryPrice',
     label: 'Entry price',
     align: 'right',
@@ -121,7 +127,7 @@ function TradesList({ selectSymbol }: TradesProps) {
     // selectSymbol(firstTrade.symbol, firstTrade.accountId);
     setFilteredTrades(newFilteredTrades);
     setFooter(
-      ['CHF', 'EUR', 'USD'].map((currency) => (
+      ['CHF', 'EUR', 'USD', 'GBP'].map((currency) => (
         newFilteredTrades
           .filter((row) => row.currency === currency)
           .reduce(
@@ -157,7 +163,6 @@ function TradesList({ selectSymbol }: TradesProps) {
           return updatedTrade;
         }),
     );
-    console.log(filteredTrades);
   }, [trades, depotId, currencyId]);
 
   React.useEffect(() => {
@@ -180,6 +185,9 @@ function TradesList({ selectSymbol }: TradesProps) {
         </Grid>
         <Grid item>
           <Link href="#" onClick={() => currencySummary('USD')}>USD</Link>
+        </Grid>
+        <Grid item>
+          <Link href="#" onClick={() => currencySummary('GBP')}>GBP</Link>
         </Grid>
         <Grid item>
           <Link href="#" onClick={() => currencySummary('')}>All</Link>
@@ -242,7 +250,7 @@ function Trades() {
       <Grid item xs={12}>
         <TradesList
           selectSymbol={(symbolP: string, accountIdP: number) => {
-            console.log(symbolP, accountId); setSymbol(symbolP); setAccountId(accountIdP);
+            setSymbol(symbolP); setAccountId(accountIdP);
           }}
         />
       </Grid>
