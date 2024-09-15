@@ -16,7 +16,7 @@ securityRouter.get('/', async (req: Request, res: Response) => {
 securityRouter.post('/', async (req: Request, res: Response) => {
   const { symbol, isin } = req.body;
   const security = await yahooFinance.findOne(symbol, isin);
-handleRequest<number>(res, securityModel.create(security));
+  handleRequest<number>(res, securityModel.create(security));
 });
 
 securityRouter.get('/:symbol', async (req: Request, res: Response) => {
@@ -94,6 +94,10 @@ securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
     return new Promise((resolve) => {
       yahooFinance.findOne(symbol, isin)
         .then((security: Security) => {
+          if (item.source) {
+            security.source = item.source;
+          }
+
           if (security.currency !== 'XXX') {
             return resolve(security);
           }

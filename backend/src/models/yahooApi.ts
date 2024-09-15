@@ -1,20 +1,10 @@
 import yahooFinance from 'yahoo-finance2';
 import { Security, SecurityPrice } from '../types/security';
+import { ChartResultArray } from 'yahoo-finance2/dist/esm/src/modules/chart';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
-  // yahooFinance.quote(symbol)
-  //   .then((r) => console.log(r))
-  //   .catch((r) => console.error(r));
   const response = await yahooFinance.quote(symbol);
   const responseSummary = await yahooFinance.quoteSummary(symbol, { modules: ["assetProfile"] }).catch((r) => { console.error(r); return {}; });
-
-  // if (symbol === 'ZURN.SW') {
-  //   console.log('here we are');
-  //   // console.log(response);
-  //   // console.log('here we are');
-  //   // console.log(responseSummary);
-  //   console.log({...response, ...responseSummary});
-  // }
 
   const security: Security = {
     id: -1,
@@ -33,42 +23,10 @@ export const findOne = async (symbol: string, isin?: string): Promise<Security> 
   return security;
 };
 
-// export const findOne = async (symbol: string, isin: string, callback: Function) => {
-//   try {
-//     const response = await yahooFinance.quote(symbol);
-//     const security: Security = {
-//       symbol,
-//       isin,
-//       shortName: response.shortName,
-//       longName: response.longName,
-//       currency: response.currency || 'XXX',
-//       quoteType: response.quoteType,
-//       info: response,
-//     };
-//     callback(null, security);
-//   } catch (e: unknown) {
-//     console.error(e);
-//     callback(e);
-//   }
-// };
-
-// export const findOne = async (symbol: string, callback: Function) => {
-//     try {
-//         callback(null, await yahooFinance.quoteSummary(symbol, {
-//   modules: ["price","summaryDetail", "calendarEvents" ] }));
-//     } catch (e: unknown) {
-//         console.error(e);
-//         callback(e);
-//     }
-// }
-
 // eslint-disable-next-line
 export const getDividends = async (symbol: string): Promise<any> => new Promise((resolve, reject) => {
   yahooFinance.quoteSummary(symbol, { modules: ['price', 'summaryDetail', 'calendarEvents'] })
     .then((order) => {
-      if (symbol === 'SCMN.SW') {
-        // console.log(order);
-      }
       const dividend = {
         symbol,
         dividendRate: order.summaryDetail.dividendRate,
@@ -82,10 +40,20 @@ export const getDividends = async (symbol: string): Promise<any> => new Promise(
       resolve(dividend);
     })
     .catch(reject);
-});
+  });
 
-export const getHistory = async (symbol: string): Promise<SecurityPrice[]> => new Promise((resolve) => {
-  yahooFinance.historical(symbol, { period1: '2000-01-01' })
-    .then((quotes) => resolve(quotes.map((item) => item as SecurityPrice)))
-    .catch(() => resolve([]));
-});
+  export const getHistory = async (symbol: string): Promise<SecurityPrice[]> => new Promise((resolve) => {
+    yahooFinance.chart(symbol, { period1: '2000-01-01' })
+      .then((result: ChartResultArray) => result.quotes
+        .map((quote) => ({
+          ...quote,
+          open: quote.open || null,
+          high: quote.high || null,
+          low: quote.low || null,
+          close: quote.close || null,
+          volume: quote.volume || null,
+        }) as SecurityPrice)
+      )
+      .then((quotes) => resolve(quotes.map((item) => item as SecurityPrice)))
+      .catch(() => resolve([]));
+  });

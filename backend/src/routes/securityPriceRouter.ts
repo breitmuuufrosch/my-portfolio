@@ -2,29 +2,41 @@ import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
 import * as securityPriceModel from '../models/securityPrice'
 import * as yahooFinance from '../models/yahooApi';
+import * as simplyWallStreet from '../models/simplyWallSteet';
 import { Security, SecurityPrice } from '../types/security';
 
 const securityPriceRouter = express.Router();
 
 securityPriceRouter.post('/update-all', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
-  
+
   securityModel.findAll(Number.isNaN(userId) ? -1 : userId)
     .then((securities: Security[]) => {
-      const allUpdates = securities.map((security: Security) => new Promise((resolve, reject) => {
-        yahooFinance.getHistory(security.symbol)
-          .then((history: SecurityPrice[]) => {
-            if (history.length === 0) { return resolve({ symbol: security.symbol, success: true }); }
-            const securityHistory = history.map((row) => ({
-              ...row,
-              security_id: security.id,
-            }));
+      const allUpdates = securities
+        .map((security: Security) => ({ id: security.id, symbol: security.symbol, source: security.source }))
+        .filter((item, i, ar) => ar.map(x => x.symbol).indexOf(item.symbol) == i)
+        .map((security) => new Promise((resolve, reject) => {
+          let historyPromise;
+          
+          if (security.source === 'simplywallstreet') {
+            historyPromise = simplyWallStreet.getHistory(security.symbol);
+          } else {
+            historyPromise = yahooFinance.getHistory(security.symbol);
+          }
 
-            securityPriceModel.updateHistory(securityHistory)
-              .then(() => resolve({ symbol: security.symbol, success: true }))
-              .catch(() => reject(new Error(`${security.symbol} success: false`)));
-          });
-      }));
+          historyPromise
+            .then((history: SecurityPrice[]) => {
+              if (history.length === 0) { return resolve({ symbol: security.symbol, success: true }); }
+              const securityHistory = history.map((row) => ({
+                ...row,
+                security_id: security.id,
+              }));
+
+              securityPriceModel.updateHistory(securityHistory)
+                .then(() => resolve({ symbol: security.symbol, success: true }))
+                .catch(() => reject(new Error(`${security.symbol} success: false`)));
+            });
+        }));
       Promise.all(allUpdates)
         .then(() => res.status(200).json('successfully updated'))
         .catch((err: Error) => { throw err; });

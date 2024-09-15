@@ -122,7 +122,7 @@ FROM (
     WHERE b.balance > 0
   ) AS w
   WHERE
-    w.user_id = 1
+    w.user_id = :userId
     AND exit_price > 0
     AND w.symbol NOT LIKE '%Migros Bank%'
 ) AS d
