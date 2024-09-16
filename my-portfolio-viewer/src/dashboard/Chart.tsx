@@ -166,7 +166,7 @@ function Chart(props: {
             startDate = new Date(startDate.setDate(startDate.getDate() - 1));
           }
 
-          getSecurityQuotes(symbol, startDate, dates[1])
+          getSecurityQuotes(symbol, startDate, dates[1], accountId)
             .then(
               (result) => {
                 setAvailableViewModes([ViewMode.PRICE, ViewMode.PL, ViewMode.VALUE]);

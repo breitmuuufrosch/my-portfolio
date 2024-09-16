@@ -73,7 +73,8 @@ export const findAll = (userId: number): Promise<Security[]> => {
       s.last_date,
       s.exit_price,
       s.profit_loss,
-      s.profit_loss_percentage
+      s.profit_loss_percentage,
+      s.last_price_update
     FROM security_summary AS s
     WHERE
       s.user_id = :userId OR :userId = -1
@@ -99,6 +100,7 @@ export const findAll = (userId: number): Promise<Security[]> => {
           source: row.source,
           source_url: row.source_url,
           holdings: row.amount,
+          lastPriceUpdate: new Date(row.last_price_update),
         }));
         resolve(security);
       },

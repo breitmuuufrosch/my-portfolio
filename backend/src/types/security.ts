@@ -15,6 +15,7 @@ export interface Security {
   holdings?: number,
   source: string,
   sourceUrl?: string,
+  lastPriceUpdate?: Date,
 }
 
 export interface SecurityPrice {

@@ -1,6 +1,7 @@
 import yahooFinance from 'yahoo-finance2';
 import { Security, SecurityPrice } from '../types/security';
 import { ChartResultArray } from 'yahoo-finance2/dist/esm/src/modules/chart';
+import { isoDate } from '../utils/formatting';
 
 export const findOne = async (symbol: string, isin?: string): Promise<Security> => {
   const response = await yahooFinance.quote(symbol);
@@ -42,8 +43,8 @@ export const getDividends = async (symbol: string): Promise<any> => new Promise(
     .catch(reject);
   });
 
-  export const getHistory = async (symbol: string): Promise<SecurityPrice[]> => new Promise((resolve) => {
-    yahooFinance.chart(symbol, { period1: '2000-01-01' })
+  export const getHistory = async (symbol: string, date?: Date): Promise<SecurityPrice[]> => new Promise((resolve) => {
+    yahooFinance.chart(symbol, { period1: date ? isoDate(date) : '2000-01-01' })
       .then((result: ChartResultArray) => result.quotes
         .map((quote) => ({
           ...quote,

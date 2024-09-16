@@ -76,10 +76,11 @@ securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
   const startDate = new Date(String(req.query.start));
   const endDate = new Date(String(req.query.end));
+  const accountId = req.query.accountId !== 'undefined' ? Number(req.query.accountId) : undefined;
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityHistoryModel.getSecurityHistory(userId, security.id, startDate, endDate)
+      securityHistoryModel.getSecurityHistory(userId, security.id, startDate, endDate, accountId)
         .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes));
     })
     .catch((err: Error) => {
