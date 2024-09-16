@@ -1,8 +1,8 @@
 import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
 import * as securityPriceModel from '../models/securityPrice'
-import * as yahooFinance from '../models/yahooApi';
-import * as simplyWallStreet from '../models/simplyWallSteet';
+import * as yahooFinance from '../data/yahooApi';
+import * as simplyWallStreet from '../data/simplyWallSteet';
 import { Security, SecurityPrice } from '../types/security';
 
 const securityPriceRouter = express.Router();
@@ -17,7 +17,7 @@ securityPriceRouter.post('/update-all', async (req: Request, res: Response) => {
         .filter((item, i, ar) => ar.map(x => x.symbol).indexOf(item.symbol) == i)
         .map((security) => new Promise((resolve, reject) => {
           let historyPromise;
-          
+
           if (security.source === 'simplywallstreet') {
             historyPromise = simplyWallStreet.getHistory(security.symbol);
           } else {

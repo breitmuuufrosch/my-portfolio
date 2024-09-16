@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityPrice';
 import * as securityTransactionModel from '../models/securityTransaction';
-import * as yahooFinance from '../models/yahooApi';
+import * as yahooFinance from '../data/yahooApi';
 import { PorftolioQuote, Security, SecurityTransaction } from '../types/security';
 import { handleRequest } from '../utils/server';
 

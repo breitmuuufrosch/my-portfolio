@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as tradeModel from '../models/trade';
-import * as yahooFinance from '../models/yahooApi';
+import * as yahooFinance from '../data/yahooApi';
 import { DividendInfo } from '../types/security';
 import { Trade } from '../types/trade';
 import { handleRequest } from '../utils/server';

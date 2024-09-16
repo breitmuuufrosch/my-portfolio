@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import * as forexPriceModel from '../models/forexPrice'
-import * as yahooFinance from '../models/yahooApi';
+import * as yahooFinance from '../data/yahooApi';
 import { SecurityPrice } from '../types/security';
 import { handleRequest } from '../utils/server';
 
