@@ -27,6 +27,8 @@ interface IPieItem {
   label: string,
   value: number,
   currency: string,
+  valueDefault: number,
+  currencyDefault: string,
   color: string,
   start: number,
   end: number,
@@ -38,14 +40,24 @@ interface IPieItem {
 }
 
 const PieItem = (
-  props: { parent: IPieItem, label: string, value: number, currency: string, color: string },
+  props: {
+    parent: IPieItem,
+    label: string,
+    value: number,
+    currency: string,
+    valueDefault: number,
+    currencyDefault: string,
+    color: string,
+  },
 ): IPieItem => {
   const {
     parent,
     label,
-    currency,
     color,
     value,
+    currency,
+    valueDefault,
+    currencyDefault,
   } = props;
   const children = [];
 
@@ -65,17 +77,21 @@ const PieItem = (
     label,
     value,
     currency,
+    valueDefault,
+    currencyDefault,
     color,
     start: 0,
     end: 0,
     percentage: (): number => (item.parent ? item.value / item.parent.value : 1),
     addChild: (child: IPieItem): void => {
       item.value += child.value;
+      item.valueDefault += child.valueDefault;
       item.children.push(child);
 
       let updateParent = item.parent;
       while (updateParent) {
         updateParent.value += child.value;
+        updateParent.valueDefault += child.valueDefault;
         updateParent = updateParent.parent;
       }
     },
@@ -108,9 +124,10 @@ function CustomTooltip({ active, payload }: any) {
         .filter((row) => row.currency === currency)
         .reduce((acc, row) => {
           acc.value += row.value;
+          acc.valueDefault += row.valueDefault;
           return acc;
         }, PieItem({
-          parent: undefined, label: currency, value: 0, currency, color: '',
+          parent: undefined, label: currency, value: 0, currency, valueDefault: 0, currencyDefault: 'CHF', color: '',
         }))));
 
     finalPositions.push(...summary.filter((item) => item.value > 0));
@@ -128,7 +145,16 @@ function CustomTooltip({ active, payload }: any) {
         }}
       >
         <Grid item>{payload[0].name}</Grid>
-        <Grid item sx={{ pt: 1 }}>{`Value: ${formatNumber(payload[0].value)}`}</Grid>
+        <Grid item sx={{ pt: 1 }}>
+          {
+            `Value: ${formatNumber(payload[0].payload.value)} ${payload[0].payload.currency}`
+          }
+        </Grid>
+        <Grid item sx={{ pt: 1 }}>
+          {
+            `Value (foreign): ${formatNumber(payload[0].payload.valueDefault)} ${payload[0].payload.currencyDefault}`
+          }
+        </Grid>
         <Grid item>{`Weight: ${formatPercentage(weight)}`}</Grid>
         <Grid item sx={{ pb: 1 }}>{`Total Weight: ${formatPercentage(totalWeight)}`}</Grid>
         {
@@ -177,7 +203,7 @@ function Chart() {
     }
 
     const root = PieItem({
-      parent: undefined, label: 'all', value: 0, currency: '-', color: '',
+      parent: undefined, label: 'all', value: 0, currency: 'CHF', valueDefault: 0, currencyDefault: '-', color: '',
     });
     // const output: IPieItem[] = [];
 
@@ -192,14 +218,26 @@ function Chart() {
         const existingIndex = root.children.indexOf(existing[0]);
         const parent = root.children[existingIndex];
         PieItem({
-          parent, label: item.name, value: item.exitPrice, currency: item.currency, color: '',
+          parent,
+          label: item.name,
+          value: item.exitPriceDefault,
+          currency: item.currencyDefault,
+          valueDefault: item.exitPrice,
+          currencyDefault: item.currency,
+          color: '',
         });
       } else {
         const parent = PieItem({
-          parent: root, label: groupValue, value: 0, currency: '', color: '',
+          parent: root, label: groupValue, value: 0, currency: 'CHF', valueDefault: 0, currencyDefault: '', color: '',
         });
         PieItem({
-          parent, label: item.name, value: item.exitPrice, currency: item.currency, color: '',
+          parent,
+          label: item.name,
+          value: item.exitPriceDefault,
+          currency: item.currencyDefault,
+          valueDefault: item.exitPrice,
+          currencyDefault: item.currency,
+          color: '',
         });
       }
     });
@@ -303,7 +341,7 @@ function Chart() {
           dominantBaseline="central"
           style={{ pointerEvents: 'none' }}
         >
-          {`${formatPercentage(percent * 100, 0)}`}
+          {`${formatPercentage(percent * 100, 2)}`}
         </text>
         <path d={`M${sx},${sy}L${mx},${my}L${ex},${ey}`} stroke={hex} fill="none" />
         <circle cx={ex} cy={ey} r={2} fill={hex} stroke="none" />
@@ -430,7 +468,9 @@ function Chart() {
             // style={styleCenterText}
             />
             <Label
-              value={formatNumber(pieRoot.children?.reduce((acc: number, curr: IPieItem) => acc + curr.value, 0))}
+              value={
+                formatNumber(pieRoot.children?.reduce((acc: number, curr: IPieItem) => acc + curr.value, 0))
+              }
               position="centerTop"
               style={{ ...styleCenterText, userSelect: 'none' }}
               onClick={() => {

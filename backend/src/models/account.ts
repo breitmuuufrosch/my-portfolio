@@ -39,7 +39,21 @@ export const getSummary = (userId: number): Promise<AccountSummary[]> => {
       b.id,
       b.name,
       b.currency,
-      b.balance
+      b.balance,
+      CASE WHEN b.currency = 'CHF' THEN b.balance
+      ELSE
+      b.balance * (
+        SELECT 
+          fp.close
+        FROM forex_price AS fp
+        WHERE
+          fp.currency_from = b.currency
+          AND fp.currency_to = 'CHF'
+        ORDER BY fp.date DESC
+        LIMIT 1
+      )
+      END AS balance_default,
+      'CHF' AS currency_default
     FROM balance AS b
     WHERE b.user_id = :userId
   `);
@@ -56,6 +70,8 @@ export const getSummary = (userId: number): Promise<AccountSummary[]> => {
           name: row.name,
           currency: row.currency,
           balance: Number(row.balance),
+          currencyDefault: row.currency_default,
+          balanceDefault: Number(row.balance_default),
         }));
         resolve(accountSummary);
       },

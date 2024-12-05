@@ -49,7 +49,7 @@ export const updateHistory = (history: SecurityPrice[]): Promise<string> => {
   });
 };
 
-export const getSecurityHistory = (userId: number, securityId: number, startDate: Date, endDate: Date): Promise<PorftolioQuote[]> => {
+export const getSecurityHistory = (userId: number, securityId: number, startDate: Date, endDate: Date, accountId: number): Promise<PorftolioQuote[]> => {
   startDate = startDate ?? new Date(new Date().setFullYear(new Date().getFullYear() - 1));
   endDate = endDate ?? new Date();
 
@@ -78,6 +78,7 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
         AND security_summary.date <= sph.date
         AND security_summary.type IN ('buy', 'sell', 'posting','vesting')
         AND security_summary.user_id = :userId
+        AND (security_summary.account_id = :accountId OR :accountId IS NULL)
       LEFT JOIN account AS a ON a.id = security_summary.account_id
         AND a.user_id = :userId
       WHERE sph.security_id IN (:securityId)
@@ -100,7 +101,7 @@ export const getSecurityHistory = (userId: number, securityId: number, startDate
 
   return new Promise((resolve, reject) => {
     db.query(
-      sql(queryString)({ userId, securityId, startDate, endDate }),
+      sql(queryString)({ userId, securityId, startDate, endDate, accountId }),
       (err, result) => {
         if (err) { reject(err); return; }
 

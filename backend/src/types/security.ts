@@ -15,6 +15,7 @@ export interface Security {
   holdings?: number,
   source: string,
   sourceUrl?: string,
+  lastPriceUpdate?: Date,
 }
 
 export interface SecurityPrice {
@@ -79,7 +80,11 @@ export const rowToSecurityHistory = (row: RowDataPacket): SecurityTransactionSum
 });
 
 export interface SecurityTransactionForeign extends SecurityTransaction {
+  exchangeToCurrency: string,
   exchangeToValue: number,
+  exchangeToFee: number,
+  exchangeToTax: number,
+  exchangeToAccountId: number,
   exchangeFromCurrency: string,
   exchangeFromValue: number,
   exchangeFromFee: number,

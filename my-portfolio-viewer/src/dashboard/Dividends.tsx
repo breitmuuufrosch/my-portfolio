@@ -20,6 +20,7 @@ function range(low: number, high: number) {
 
 interface DividendSummary {
   date: string,
+  dateView: string,
   dividends: SecurityTransaction[],
 }
 
@@ -31,6 +32,7 @@ const groupByDate = (array: SecurityTransaction[]) => array.reduce((results, ite
   } else {
     results.push({
       date: `${itemDate.getFullYear()}-${itemDate.getMonth()}`,
+      dateView: `${itemDate.getFullYear()}-${itemDate.getMonth() + 1}`,
       dividends: [item],
     });
   }
@@ -173,6 +175,32 @@ export function Dividends() {
       {renderCurrency('CHF')}
       {renderCurrency('EUR')}
       {renderCurrency('USD')}
+      {
+        types[0] === 'planned' && transactions && transactions
+          .sort((a: DividendSummary, b: DividendSummary) => {
+            const aDate = a.date.split('-');
+            const bDate = b.date.split('-');
+            const { aYear, aMonth } = { aYear: Number(aDate[0]), aMonth: Number(aDate[1]) };
+            const { bYear, bMonth } = { bYear: Number(bDate[0]), bMonth: Number(bDate[1]) };
+
+            if (aYear === bYear) {
+              return aMonth - bMonth;
+            }
+            return aYear - bYear;
+          })
+          .map((t) => (
+            <>
+              <h3>{t.dateView}</h3>
+              <div>
+                {
+                  t.dividends.filter((d) => d.total > 0).map((d) => (
+                    `${d.symbol} (${formatNumber(d.total)}), `
+                  ))
+                }
+              </div>
+            </>
+          ))
+      }
     </>
   );
 }

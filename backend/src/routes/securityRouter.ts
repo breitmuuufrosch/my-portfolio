@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import * as securityModel from '../models/security';
 import * as securityHistoryModel from '../models/securityPrice';
 import * as securityTransactionModel from '../models/securityTransaction';
-import * as yahooFinance from '../models/yahooApi';
+import * as yahooFinance from '../data/yahooApi';
 import { PorftolioQuote, Security, SecurityTransaction } from '../types/security';
 import { handleRequest } from '../utils/server';
 
@@ -16,7 +16,7 @@ securityRouter.get('/', async (req: Request, res: Response) => {
 securityRouter.post('/', async (req: Request, res: Response) => {
   const { symbol, isin } = req.body;
   const security = await yahooFinance.findOne(symbol, isin);
-handleRequest<number>(res, securityModel.create(security));
+  handleRequest<number>(res, securityModel.create(security));
 });
 
 securityRouter.get('/:symbol', async (req: Request, res: Response) => {
@@ -76,10 +76,11 @@ securityRouter.get('/:symbol/prices', async (req: Request, res: Response) => {
   const userId = Number(req.headers['x-user-id']);
   const startDate = new Date(String(req.query.start));
   const endDate = new Date(String(req.query.end));
+  const accountId = req.query.accountId !== 'undefined' ? Number(req.query.accountId) : undefined;
 
   securityModel.findOne(symbol)
     .then((security: Security) => {
-      securityHistoryModel.getSecurityHistory(userId, security.id, startDate, endDate)
+      securityHistoryModel.getSecurityHistory(userId, security.id, startDate, endDate, accountId)
         .then((portfolioQuotes: PorftolioQuote[]) => res.status(200).json(portfolioQuotes));
     })
     .catch((err: Error) => {
@@ -94,6 +95,10 @@ securityRouter.post('/add-multiple', async (req: Request, res: Response) => {
     return new Promise((resolve) => {
       yahooFinance.findOne(symbol, isin)
         .then((security: Security) => {
+          if (item.source) {
+            security.source = item.source;
+          }
+
           if (security.currency !== 'XXX') {
             return resolve(security);
           }

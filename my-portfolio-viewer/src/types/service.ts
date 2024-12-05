@@ -86,10 +86,10 @@ export const getSecurityQuotes = async (
   symbol: string,
   startDate: Date,
   endDate: Date,
+  accountId?: number,
 ): Promise<PorftolioQuote[]> => (
-  getServiceData<PorftolioQuote[]>(
-    `http://localhost:3333/securities/${symbol}/prices?start=${isoDate(startDate)}&end=${isoDate(endDate)}`,
-  )
+  getServiceData<PorftolioQuote[]>(`http://localhost:3333/securities/${symbol}/prices?`
+    + `start=${isoDate(startDate)}&end=${isoDate(endDate)}&accountId=${accountId}`)
 );
 
 export const getSecurityTransactionDetails = async (

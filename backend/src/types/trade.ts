@@ -6,6 +6,7 @@ export interface Trade {
   quoteType: string,
   currency: string,
   buyPrice: number,
+  buyPriceAll: number,
   entryPrice: number,
   entryPriceAll: number,
   amount: number,
@@ -14,6 +15,8 @@ export interface Trade {
   lastDate: Date,
   profitLoss: number,
   profitLossPercentage: number,
+  exitPriceDefault: number,
+  currencyDefault: string,
 }
 
 export interface TradeDiversification {
@@ -25,6 +28,8 @@ export interface TradeDiversification {
   industry: string,
   exitPrice: number,
   currency: string,
+  exitPriceDefault: number,
+  currencyDefault: string,
   realEstate: string,
   account: string,
   depot: string,
